@@ -1,33 +1,35 @@
 /*
-Copyright (c) 2019-20 John MacCallum
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+  Copyright (c) 2019-21 John MacCallum Permission is hereby granted,
+  free of charge, to any person obtaining a copy of this software
+  and associated documentation files (the "Software"), to deal in
+  the Software without restriction, including without limitation the
+  rights to use, copy, modify, merge, publish, distribute,
+  sublicense, and/or sell copies of the Software, and to permit
+  persons to whom the Software is furnished to do so, subject to the
+  following conditions:
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+  The above copyright notice and this permission notice shall be
+  included in all copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+  BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+  ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+  SOFTWARE.
 */
 
 /**
- * @file ose_conf.h
- * @brief Configuration options.
- *
- * This file provides support for a variety of options including
- * extended types, and debugging. They can be enabled by passing the 
- * -D option to gcc-like compilers, for example 
- * @code{.txt} clang ... -DOSE_DEBUG ... @endcode
- */
+   @file ose_conf.h
+   @brief Configuration options.
+
+   This file provides support for a variety of options including
+   extended types, and debugging. They can be enabled by passing the 
+   -D option to gcc-like compilers, for example 
+   @code{.txt} clang ... -DOSE_DEBUG ... @endcode
+*/
 
 #ifndef OSE_CONF_H
 #define OSE_CONF_H
@@ -37,16 +39,16 @@ extern "C" {
 #endif
 
 /**
- * VM bundle sizes
- * 
- * These can be changed here or defined when invoking `make` if not building
- * a library to be linked against later, since these values are needed
- * in different header files. 
- * 
- * If these are commented out, the osevm will be built with a version
- * of #osevm_init() that takes 7 arguments in order to specify these 
- * sizes at runtime.
- */
+   VM bundle sizes
+ 
+   These can be changed here or defined when invoking `make` 
+   if not building a library to be linked against later, 
+   since these values are needed in different header files. 
+ 
+   If these are commented out, the osevm will be built with a version
+   of #osevm_init() that takes 7 arguments in order to specify these 
+   sizes at runtime.
+*/
 /* #ifndef OSE_CONF_VM_INPUT_SIZE */
 /* #define OSE_CONF_VM_INPUT_SIZE 8192 */
 /* #endif */
@@ -67,11 +69,12 @@ extern "C" {
 /* #endif */
 
 /**
- * VM hooks
- *
- * Uncomment the three lines for whichever hooks you want to implement,
- * and change the name of the function from my_xxx to the name of your function.
- */
+   VM hooks
+ 
+   Uncomment the three lines for whichever hooks you want to 
+   implement, and change the name of the function from 
+   my_xxx to the name of your function.
+*/
 /* #ifndef OSEVM_ASSIGN */
 /* #define OSEVM_ASSIGN my_assign */
 /* #endif */
@@ -148,8 +151,8 @@ extern "C" {
 /* #define OSEVM_APPENDBYTE my_appendByte */
 /* #endif */
 
-/* #ifndef OSEVM_DEFAULT */
-/* #define OSEVM_DEFAULT my_default */
+/* #ifndef OSEVM_RESPONDTOSTRING */
+/* #define OSEVM_RESPONDTOSTRING my_respondToString */
 /* #endif */
 
 /* #ifndef OSEVM_PREINPUT */
@@ -168,12 +171,9 @@ extern "C" {
 /* #define OSEVM_POSTCONTROL my_postControl */
 /* #endif */
 
-/* #ifndef OSEVM_ISKNOWNADDRESS */
-/* #define OSEVM_ISKNOWNADDRESS my_isKnownAddress */
-/* #endif */
-
 /**
- * Uncomment these to provide support for different nonstandard OSC types
+ Uncomment these to provide support for different nonstandard OSC
+ types
  */
 /* define OSE_CONF_PROVIDE_TYPE_SYMBOL */
 /* define OSE_CONF_PROVIDE_TYPE_DOUBLE */
@@ -189,31 +189,33 @@ extern "C" {
 /* define OSE_CONF_PROVIDE_TYPE_INFINITUM */
 
 /**
- * Debug is significantly slower, but provides a number of features 
- * that can help track down problems.
- */
+   Debug is significantly slower, but provides a number of features 
+   that can help track down problems.
+*/
 /* #define OSE_CONF_DEBUG */
 
-/* When not in debug mode, recoverable assertions are turned off. 
-   In debug mode, the default behavior is for recoverable assertions to 
-   behave like normal assertions and call abort(), however, by defining
-   OSE_CONF_RASSERT_THROW, they can be made to longjmp back to a point
-   before the assertion failed. 
+/* When not in debug mode, recoverable assertions are turned off.
+   In debug mode, the default behavior is for recoverable assertions
+   to behave like normal assertions and call abort(), however, by
+   defining OSE_CONF_RASSERT_THROW, they can be made to longjmp back
+   to a point before the assertion failed.
 */
 /* #define OSE_CONF_RASSERT_FAIL */
 /* #define OSE_CONF_RASSERT_THROW */
 
 /**
- * The address of anonymous values. When a value is pushed onto the stack
- * with a function like #ose_pushInt32(), it goes on as a message with a
- * default message, which can be set here. By default, the message is empty.
- * 
- * In order to define your own default, you must explicitly pad the address
- * with enough NULL bytes to make it a multiple of 4 (for example: "/x\0\0",
- * or "/foobar\0"). OSE_CONF_ADDRESS_ANONVAL_LEN refers to the number of 
- * non-NULL bytes, and OSE_CONF_ADDRESS_ANONVAL_SIZE is the full length
- * of the padded address (multiple of 4 bytes).
- */
+   The address of anonymous values. When a value is pushed onto the
+   stack with a function like #ose_pushInt32(), it goes on as a
+   message with a default message, which can be set here. By
+   default, the message is empty.
+  
+   In order to define your own default, you must explicitly pad the
+   address with enough NULL bytes to make it a multiple of 4 (for
+   example: "/x\0\0", or "/foobar\0"). OSE_CONF_ADDRESS_ANONVAL_LEN
+   refers to the number of non-NULL bytes, and
+   OSE_CONF_ADDRESS_ANONVAL_SIZE is the full length of the padded
+   address (multiple of 4 bytes).
+*/
 /* #define OSE_CONF_ADDRESS_ANONVAL "/\0\0\0" */
 /* #define OSE_CONF_ADDRESS_ANONVAL_LEN 1 */
 /* #define OSE_CONF_ADDRESS_ANONVAL_SIZE 4 */

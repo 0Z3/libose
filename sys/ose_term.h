@@ -21,19 +21,5 @@
   SOFTWARE.
 */
 
-#ifndef OSE_LOADLIB
-#define OSE_LOADLIB
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-void ose_loadLib(ose_bundle osevm, const char * const name);
-void ose_readFileLines(ose_bundle bundle, const char * const name);
-void ose_readFile(ose_bundle bundle, const char * const name);
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif
+int ose_termRaw(void);
+int ose_termRead(void);

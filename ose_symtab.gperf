@@ -1,29 +1,33 @@
 %{
 /*
-Copyright (c) 2019-20 John MacCallum
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+Copyright (c) 2019-21 John MacCallum Permission is hereby
+granted, free of charge, to any person obtaining a copy of this
+software and associated documentation files (the "Software"), to
+deal in the Software without restriction, including without
+limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject
+to the following conditions:
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
+
 #include <stdlib.h>
 #include <string.h>
 #include "ose.h"
 #include "ose_stackops.h"
 #include "ose_builtins.h"
+#include "ose_vm.h"
 
 #ifdef OSE_SYMTAB_FNSYMS
 #define OSE_SYMTAB_VALUE(s) s, #s
@@ -47,9 +51,9 @@ struct _ose_symtab_rec {
 #endif
 };
 %%
-################################################################################
+#################################################################
 ### Stack Operations
-################################################################################
+#################################################################
 /2drop, OSE_SYMTAB_VALUE(ose_builtin_2drop)
 /2dup, OSE_SYMTAB_VALUE(ose_builtin_2dup)
 /2over, OSE_SYMTAB_VALUE(ose_builtin_2over)
@@ -68,9 +72,9 @@ struct _ose_symtab_rec {
 /rot, OSE_SYMTAB_VALUE(ose_builtin_rot)
 /swap, OSE_SYMTAB_VALUE(ose_builtin_swap)
 /tuck, OSE_SYMTAB_VALUE(ose_builtin_tuck)
-################################################################################
+#################################################################
 ### Grouping / Ungrouping
-################################################################################
+#################################################################
 /bundle/all, OSE_SYMTAB_VALUE(ose_builtin_bundleAll)
 /bundle/frombottom, OSE_SYMTAB_VALUE(ose_builtin_bundleFromBottom)
 /bundle/fromtop, OSE_SYMTAB_VALUE(ose_builtin_bundleFromTop)
@@ -88,9 +92,9 @@ struct _ose_symtab_rec {
 /unpack/drop, OSE_SYMTAB_VALUE(ose_builtin_unpackDrop)
 /unpack/bundle, OSE_SYMTAB_VALUE(ose_builtin_unpackBundle)
 /unpack/drop/bundle, OSE_SYMTAB_VALUE(ose_builtin_unpackDropBundle)
-################################################################################
+#################################################################
 ### Queries
-################################################################################
+#################################################################
 /count/elems, OSE_SYMTAB_VALUE(ose_builtin_countElems)
 /count/items, OSE_SYMTAB_VALUE(ose_builtin_countItems)
 /length/address, OSE_SYMTAB_VALUE(ose_builtin_lengthAddress)
@@ -104,9 +108,10 @@ struct _ose_symtab_rec {
 /sizes/elems, OSE_SYMTAB_VALUE(ose_builtin_sizesElems)
 /sizes/items, OSE_SYMTAB_VALUE(ose_builtin_sizesItems)
 /size/tt, OSE_SYMTAB_VALUE(ose_builtin_sizeTT)
-################################################################################
+/addresses, OSE_SYMTAB_VALUE(ose_builtin_getAddresses)
+#################################################################
 ### Operations on Bundle Elements and Items
-################################################################################
+#################################################################
 /blob/toelem, OSE_SYMTAB_VALUE(ose_builtin_blobToElem)
 /blob/totype, OSE_SYMTAB_VALUE(ose_builtin_blobToType)
 /concat/blobs, OSE_SYMTAB_VALUE(ose_builtin_concatenateBlobs)
@@ -135,14 +140,18 @@ struct _ose_symtab_rec {
 /replace, OSE_SYMTAB_VALUE(ose_builtin_replace)
 /assign, OSE_SYMTAB_VALUE(ose_builtin_assign)
 /lookup, OSE_SYMTAB_VALUE(ose_builtin_lookup)
-################################################################################
+/route, OSE_SYMTAB_VALUE(ose_builtin_route)
+/route/all, OSE_SYMTAB_VALUE(ose_builtin_routeWithDelegation)
+/gather, OSE_SYMTAB_VALUE(ose_builtin_gather)
+/nth, OSE_SYMTAB_VALUE(ose_builtin_nth)
+#################################################################
 ### Creatio Ex Nihilo
-################################################################################
+#################################################################
 /make/bundle, OSE_SYMTAB_VALUE(ose_builtin_pushBundle)
 /push/blob, OSE_SYMTAB_VALUE(ose_builtin_makeBlob)
-################################################################################
+#################################################################
 ### Arithmetic
-################################################################################
+#################################################################
 /add, OSE_SYMTAB_VALUE(ose_builtin_add)
 /sub, OSE_SYMTAB_VALUE(ose_builtin_sub)
 /mul, OSE_SYMTAB_VALUE(ose_builtin_mul)
@@ -156,9 +165,9 @@ struct _ose_symtab_rec {
 /lt, OSE_SYMTAB_VALUE(ose_builtin_lt)
 /and, OSE_SYMTAB_VALUE(ose_builtin_and)
 /or, OSE_SYMTAB_VALUE(ose_builtin_or)
-################################################################################
+#################################################################
 ### Predicates
-################################################################################
+#################################################################
 /is/addresschar, OSE_SYMTAB_VALUE(ose_builtin_isAddressChar)
 /is/type/known, OSE_SYMTAB_VALUE(ose_builtin_isKnownTypetag)
 /is/type/string, OSE_SYMTAB_VALUE(ose_builtin_isStringType)
@@ -167,9 +176,9 @@ struct _ose_symtab_rec {
 /is/type/numeric, OSE_SYMTAB_VALUE(ose_builtin_isNumericType)
 /is/type/unit, OSE_SYMTAB_VALUE(ose_builtin_isUnitType)
 /is/type/bool, OSE_SYMTAB_VALUE(ose_builtin_isBoolType)
-################################################################################
+#################################################################
 ### Builtins
-################################################################################
+#################################################################
 /exec, OSE_SYMTAB_VALUE(ose_builtin_exec)
 /if, OSE_SYMTAB_VALUE(ose_builtin_if)
 /dotimes, OSE_SYMTAB_VALUE(ose_builtin_dotimes)
@@ -182,6 +191,32 @@ struct _ose_symtab_rec {
 /map, OSE_SYMTAB_VALUE(ose_builtin_map)
 /return, OSE_SYMTAB_VALUE(ose_builtin_return)
 /version, OSE_SYMTAB_VALUE(ose_builtin_version)
+/assignstacktoenv, OSE_SYMTAB_VALUE(ose_builtin_assignStackToEnv)
+/lookupinenv, OSE_SYMTAB_VALUE(ose_builtin_lookupInEnv)
+/funcall, OSE_SYMTAB_VALUE(ose_builtin_funcall)
+/quote, OSE_SYMTAB_VALUE(ose_builtin_quote)
+/copycontextbundle, OSE_SYMTAB_VALUE(ose_builtin_copyContextBundle)
+/appendtocontextbundle, OSE_SYMTAB_VALUE(ose_builtin_appendToContextBundle)
+/replacecontextbundle, OSE_SYMTAB_VALUE(ose_builtin_replaceContextBundle)
+/moveelemtocontextbundle, OSE_SYMTAB_VALUE(ose_builtin_moveElemToContextBundle)
+/toint32, OSE_SYMTAB_VALUE(ose_builtin_toInt32)
+/tofloat, OSE_SYMTAB_VALUE(ose_builtin_toFloat)
+/tostring, OSE_SYMTAB_VALUE(ose_builtin_toString)
+/toblob, OSE_SYMTAB_VALUE(ose_builtin_toBlob)
+/appendbyte, OSE_SYMTAB_VALUE(ose_builtin_appendByte)
+/@, OSE_SYMTAB_VALUE(OSEVM_ASSIGN)
+/$, OSE_SYMTAB_VALUE(OSEVM_LOOKUP)
+/!, OSE_SYMTAB_VALUE(OSEVM_FUNCALL)
+/', OSE_SYMTAB_VALUE(OSEVM_QUOTE)
+/>, OSE_SYMTAB_VALUE(OSEVM_COPYCONTEXTBUNDLE)
+/<<, OSE_SYMTAB_VALUE(OSEVM_APPENDTOCONTEXTBUNDLE)
+/<, OSE_SYMTAB_VALUE(OSEVM_REPLACECONTEXTBUNDLE)
+/-, OSE_SYMTAB_VALUE(OSEVM_MOVEELEMTOCONTEXTBUNDLE)
+/i, OSE_SYMTAB_VALUE(OSEVM_TOINT32)
+/f, OSE_SYMTAB_VALUE(OSEVM_TOFLOAT)
+/s, OSE_SYMTAB_VALUE(OSEVM_TOSTRING)
+/b, OSE_SYMTAB_VALUE(OSEVM_TOBLOB)
+/&, OSE_SYMTAB_VALUE(OSEVM_APPENDBYTE)
 ###
 %%
 

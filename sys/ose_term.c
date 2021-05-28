@@ -21,19 +21,13 @@
   SOFTWARE.
 */
 
-#ifndef OSE_LOADLIB
-#define OSE_LOADLIB
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-void ose_loadLib(ose_bundle osevm, const char * const name);
-void ose_readFileLines(ose_bundle bundle, const char * const name);
-void ose_readFile(ose_bundle bundle, const char * const name);
-
-#ifdef __cplusplus
-}
-#endif
-
+#if defined(__APPLE__) \
+    || defined(__unix__)\
+    || defined(__linux__)
+#include "ose_nixterm.c"
+#elif defined(_WIN32)\
+    || defined(_WIN64)
+#include "ose_winterm.c"
+#else
+#error ose_term.c: unsupported platform!
 #endif

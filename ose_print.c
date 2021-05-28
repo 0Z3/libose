@@ -1,22 +1,24 @@
 /*
-  Copyright (c) 2019-20 John MacCallum
-  Permission is hereby granted, free of charge, to any person obtaining a copy
-  of this software and associated documentation files (the "Software"), to deal
-  in the Software without restriction, including without limitation the rights
-  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-  copies of the Software, and to permit persons to whom the Software is
-  furnished to do so, subject to the following conditions:
+  Copyright (c) 2019-21 John MacCallum Permission is hereby granted,
+  free of charge, to any person obtaining a copy of this software
+  and associated documentation files (the "Software"), to deal in
+  the Software without restriction, including without limitation the
+  rights to use, copy, modify, merge, publish, distribute,
+  sublicense, and/or sell copies of the Software, and to permit
+  persons to whom the Software is furnished to do so, subject to the
+  following conditions:
 
-  The above copyright notice and this permission notice shall be included in all
-  copies or substantial portions of the Software.
+  The above copyright notice and this permission notice shall be
+  included in all copies or substantial portions of the Software.
 
-  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-  SOFTWARE.
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+  HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+  WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+  DEALINGS IN THE SOFTWARE.
 */
 
 #include <string.h>
@@ -319,7 +321,8 @@ static int32_t ose_pprintFullBundle_r(ose_constbundle bundle,
 		const int32_t addrlen = strlen(addr);
 		if(!strncmp(addr, OSE_BUNDLE_ID, OSE_BUNDLE_ID_LEN)){
 			int32_t oo = OSE_BUNDLE_HEADER_LEN;
-			ose_constbundle subbundle = ose_makeBundle(ose_getBundlePtr(bundle) + o + 4);
+			ose_constbundle subbundle =
+                ose_makeBundle(ose_getBundlePtr(bundle) + o + 4);
 			int n = ose_pprintFullBundle_r(subbundle,
 						       buf, buflen,
 						       oo, ss, to + o,
@@ -342,7 +345,8 @@ static int32_t ose_pprintFullBundle_r(ose_constbundle bundle,
 			}
 
 			int32_t to = o + 4 + ose_pnbytes(addrlen);
-			const char * const ttstr = ose_readString((ose_bundle)bundle, to);
+			const char * const ttstr =
+                ose_readString((ose_bundle)bundle, to);
 			const int32_t ttstrlen = strlen(ttstr);
 			int32_t po = to + ose_pnbytes(ttstrlen);
 			for(int ii = 0; ii < ttstrlen; ii++){

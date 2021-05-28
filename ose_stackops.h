@@ -1,21 +1,23 @@
 /*
-Copyright (c) 2019-20 John MacCallum
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+Copyright (c) 2019-21 John MacCallum Permission is hereby granted,
+free of charge, to any person obtaining a copy of this software and
+associated documentation files (the "Software"), to deal in the
+Software without restriction, including without limitation the
+rights to use, copy, modify, merge, publish, distribute, sublicense,
+and/or sell copies of the Software, and to permit persons to whom
+the Software is furnished to do so, subject to the following
+conditions:
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
@@ -938,11 +940,13 @@ void ose_sizePayload(ose_bundle bundle);
 void ose_sizesElems(ose_bundle bundle);
 void ose_sizesItems(ose_bundle bundle);
 void ose_sizeTT(ose_bundle bundle);
+void ose_getAddresses(ose_bundle bundle);
 
 /**************************************************
  * Operations on Bundle Elements and Items
  **************************************************/
 void ose_blobToElem(ose_bundle bundle);
+void ose_blobToType_impl(ose_bundle bundle, char typetag);
 void ose_blobToType(ose_bundle bundle);
 void ose_concatenateBlobs(ose_bundle bundle);
 void ose_concatenateStrings(ose_bundle bundle);
@@ -950,9 +954,13 @@ void ose_copyAddressToString(ose_bundle bundle);
 void ose_copyPayloadToBlob(ose_bundle bundle);
 void ose_swapStringToAddress(ose_bundle bundle);
 void ose_copyTTToBlob(ose_bundle bundle);
+void ose_decatenateBlobFromEnd_impl(ose_bundle bundle, int32_t n);
 void ose_decatenateBlobFromEnd(ose_bundle bundle);
+void ose_decatenateBlobFromStart_impl(ose_bundle bundle, int32_t n);
 void ose_decatenateBlobFromStart(ose_bundle bundle);
+void ose_decatenateStringFromEnd_impl(ose_bundle bundle, int32_t n);
 void ose_decatenateStringFromEnd(ose_bundle bundle);
+void ose_decatenateStringFromStart_impl(ose_bundle bundle, int32_t n);
 void ose_decatenateStringFromStart(ose_bundle bundle);
 void ose_elemToBlob(ose_bundle bundle);
 void ose_itemToBlob(ose_bundle bundle);
@@ -970,6 +978,10 @@ void ose_pmatch(ose_bundle bundle);
 void ose_replace(ose_bundle bundle);
 void ose_assign(ose_bundle bundle);
 void ose_lookup(ose_bundle bundle);
+void ose_route(ose_bundle bundle);
+void ose_routeWithDelegation(ose_bundle bundle);
+void ose_gather(ose_bundle bundle);
+void ose_nth(ose_bundle bundle);
 
 /**************************************************
  * Creatio Ex Nihilo

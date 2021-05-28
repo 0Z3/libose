@@ -55,25 +55,3 @@ int32_t ntohl(int32_t x)
 	}
 }
 #endif
-
-#ifdef OSE_DEBUG
-#include <stdio.h>
-#include <string.h>
-#include "ose_print.h"
-void printBundle(ose_bundle bundle, const char * const str)
-{
-	char buf[8192];
-	memset(buf, 0, 8192);
-	ose_pprintBundle(bundle, buf, 8192);
-	printf("\n%s>>>>>\n%s\n%s<<<<<\n", str, buf, str);
-}
-void pbytes(ose_bundle bundle, int32_t start, int32_t end)
-{
-	char *b = ose_getBundlePtr(bundle);
-	for(int32_t i = start; i < end; i++){
-		fprintf(stderr, "%d: %c %d\n", i,
-		       (unsigned char)b[i],
-		       (unsigned char)b[i]);
-	}
-}
-#endif

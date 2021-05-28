@@ -1,22 +1,24 @@
 /*
-Copyright (c) 2019-20 John MacCallum
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+  Copyright (c) 2019-21 John MacCallum Permission is hereby granted,
+  free of charge, to any person obtaining a copy of this software
+  and associated documentation files (the "Software"), to deal in
+  the Software without restriction, including without limitation the
+  rights to use, copy, modify, merge, publish, distribute,
+  sublicense, and/or sell copies of the Software, and to permit
+  persons to whom the Software is furnished to do so, subject to the
+  following conditions:
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+  The above copyright notice and this permission notice shall be
+  included in all copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+  HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+  WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+  DEALINGS IN THE SOFTWARE.
 */
 
 #include <stdio.h>
@@ -29,22 +31,23 @@ SOFTWARE.
 #include "ose_vm.h"
 #include "ose_symtab.h"
 
-#define OSE_BUILTIN_DEFN(name)				\
-	void ose_builtin_##name(ose_bundle bundle)	\
-	{						\
-		ose_##name(OSEVM_STACK(bundle));        \
-        }
+#define OSE_BUILTIN_DEFN(name)                  \
+    void ose_builtin_##name(ose_bundle bundle)	\
+    {                                           \
+        ose_##name(OSEVM_STACK(bundle));        \
+    }
 
-#define OSE_BUILTIN_DEFPRED(name)				\
-	void ose_builtin_##name(ose_bundle bundle)		\
-	{							\
-		ose_bundle vm_s = OSEVM_STACK(bundle);		\
-		ose_assert(ose_isIntegerType(ose_peekType(vm_s)) == OSETT_TRUE); \
-		int32_t i = ose_popInt32(vm_s);				\
-		ose_##name(i) == OSETT_TRUE				\
-		? ose_pushInt32(vm_s, 1)				\
-		: ose_pushInt32(vm_s, 0);				\
-		}
+#define OSE_BUILTIN_DEFPRED(name)                           \
+    void ose_builtin_##name(ose_bundle bundle)              \
+    {                                                       \
+        ose_bundle vm_s = OSEVM_STACK(bundle);              \
+        ose_assert(ose_isIntegerType(ose_peekType(vm_s))    \
+                   == OSETT_TRUE);                          \
+        int32_t i = ose_popInt32(vm_s);                     \
+        ose_##name(i) == OSETT_TRUE                         \
+            ? ose_pushInt32(vm_s, 1)                        \
+            : ose_pushInt32(vm_s, 0);                       \
+    }
 
 OSE_BUILTIN_DEFN(2drop)
 OSE_BUILTIN_DEFN(2dup)
@@ -96,6 +99,7 @@ OSE_BUILTIN_DEFN(sizePayload)
 OSE_BUILTIN_DEFN(sizesElems)
 OSE_BUILTIN_DEFN(sizesItems)
 OSE_BUILTIN_DEFN(sizeTT)
+OSE_BUILTIN_DEFN(getAddresses)
 
 OSE_BUILTIN_DEFN(blobToElem)
 OSE_BUILTIN_DEFN(blobToType)
@@ -125,7 +129,10 @@ OSE_BUILTIN_DEFN(pmatch)
 OSE_BUILTIN_DEFN(replace)
 OSE_BUILTIN_DEFN(assign)
 OSE_BUILTIN_DEFN(lookup)
-	
+OSE_BUILTIN_DEFN(route)
+OSE_BUILTIN_DEFN(routeWithDelegation)
+OSE_BUILTIN_DEFN(gather)
+OSE_BUILTIN_DEFN(nth)
 
 OSE_BUILTIN_DEFN(makeBlob)
 OSE_BUILTIN_DEFN(pushBundle)
@@ -155,533 +162,906 @@ OSE_BUILTIN_DEFPRED(isBoolType);
 
 void ose_builtin_exec(ose_bundle osevm)
 {
-	ose_bundle vm_i = OSEVM_INPUT(osevm);
-	ose_bundle vm_s = OSEVM_STACK(osevm);
-	ose_bundle vm_e = OSEVM_ENV(osevm);
-	ose_bundle vm_c = OSEVM_CONTROL(osevm);
-	ose_bundle vm_d = OSEVM_DUMP(osevm);
+    ose_bundle vm_i = OSEVM_INPUT(osevm);
+    ose_bundle vm_s = OSEVM_STACK(osevm);
+    ose_bundle vm_e = OSEVM_ENV(osevm);
+    ose_bundle vm_c = OSEVM_CONTROL(osevm);
+    ose_bundle vm_d = OSEVM_DUMP(osevm);
 
-	/* move input to dump */
-	ose_copyBundle(vm_i, vm_d);
-	ose_clear(vm_i);
+    /* move input to dump */
+    ose_copyBundle(vm_i, vm_d);
+    ose_clear(vm_i);
 
-	/* int32_t n = ose_getBundleElemCount(vm_s); */
-	/* move bundle on the stack to input */
-	/* ose_moveElem(vm_s, vm_i); */
-	/* if(ose_peekType(vm_i) == OSETT_MESSAGE){ */
-	/* 	if(ose_peekMessageArgType(vm_i) == OSETT_BLOB){ */
-	/* 		// need a test here to make sure */
-	/* 		// the blob contains a bundle member */
-	/* 		if(1){ */
-	/* 			ose_blobToElem(vm_i); */
-	/* 			ose_popAllDrop(vm_i); */
-	/* 		} */
-	/* 	} */
-	/* }else{ */
-	/* 	ose_popAllDrop(vm_i); */
-	/* } */
-	int32_t n = 0;
+    /* move env to dump  */
+    ose_copyBundle(vm_e, vm_d);
+    /* ose_replaceBundle(vm_s, vm_e); */
 
-	/* move the contents of the bundle on the stack to the input, */
-	/* and unpack it in reverse order */
-	char *sp = ose_getBundlePtr(vm_s);
-	char *ip = ose_getBundlePtr(vm_i);
-	int32_t stackoffset = OSE_BUNDLE_HEADER_LEN;
-	int32_t stacksize = ose_readInt32(vm_s, -4);
-	ose_assert(stackoffset < stacksize);
-	int32_t s = ose_readInt32(vm_s, stackoffset);
-	n++;
-	int32_t onm1 = stackoffset;
-	int32_t snm1 = s;
-	while(stackoffset + s + 4 < stacksize){
-		onm1 = stackoffset;
-		snm1 = s;
-		stackoffset += s + 4;
-		s = ose_readInt32(vm_s, stackoffset);
-		n++;	
-	}
+    /* put topmost stack element into input */
+    ose_moveElem(vm_s, vm_i);
+    if(ose_peekType(vm_i) == OSETT_BUNDLE)
+    {
+    	ose_popAllDrop(vm_i);
+    }
 
-	int32_t o1, o2;
-	if(!strncmp(sp + stackoffset + 4,
-		    OSE_BUNDLE_ID,
-		    OSE_BUNDLE_ID_LEN)){
-		/* bundle */
-		o1 = stackoffset + 4 + OSE_BUNDLE_HEADER_LEN;
-	}else{
-		/* message */
-		int32_t to, ntt, lto, po, lpo;
-		ose_getNthPayloadItem(vm_s, 1, stackoffset,
-				      &to, &ntt, &lto, &po, &lpo);
-		if(ose_readByte(vm_s, lto) == OSETT_BLOB){
-			s = ose_readInt32(vm_s, lpo);
-			o1 = lpo + 4 + OSE_BUNDLE_HEADER_LEN;
-		}else{
-			/* this can potentially enter compiled */
-			/* native code */
-			ose_assert(0 && "found a message item that is not a blob");
-			return;
-		}
-	}
-	ose_incSize(vm_i, s - OSE_BUNDLE_HEADER_LEN);
-	o2 = ose_readInt32(vm_i, -4);
-	int32_t end = o1 + s - OSE_BUNDLE_HEADER_LEN;;
-	while(o1 < end){
-		int32_t ss = ose_readInt32(vm_s, o1);
-		o2 -= ss + 4;
-		memcpy(ip + o2, sp + o1, ss + 4);
-		o1 += ss + 4;
-	}
-	ose_dropAtOffset(vm_s, stackoffset);
+    /* move topmost bundle to env */
+    ose_replaceBundle(vm_s, vm_e);
 
-	/* copy environment to dump */
-	ose_copyBundle(vm_e, vm_d);
-	if(n >= 2){
-		ose_clear(vm_e);
-		/*if(ose_peekType(vm_s) == OSETT_MESSAGE){ */
-		if(strncmp(sp + onm1 + 4, OSE_BUNDLE_ID, OSE_BUNDLE_ID_LEN)){
-		        if(ose_peekMessageArgType(vm_s) == OSETT_BLOB){
-				ose_blobToElem(vm_s);
-				snm1 = ose_readInt32(vm_s, onm1);
-			}else{
-				ose_assert(0 && "second argument to exec, the environment, must be a blob or a bundle.");
-			}
-		}
-		/* ose_replaceBundle(vm_s, vm_e); */
-		ose_incSize(vm_e, snm1 - OSE_BUNDLE_HEADER_LEN);
-		memcpy(ose_getBundlePtr(vm_e) + OSE_BUNDLE_HEADER_LEN,
-		       sp + onm1 + 4 + OSE_BUNDLE_HEADER_LEN,
-		       snm1 - OSE_BUNDLE_HEADER_LEN);
-		ose_dropAtOffset(vm_s, onm1);
-	}else{
-		;
-	}
-
-	/* move stack to dump */
-	ose_copyBundle(vm_s, vm_d);
-	ose_clear(vm_s);
-
-	/* move control to dump */
-	ose_drop(vm_c);
-	ose_copyBundle(vm_c, vm_d);
-	ose_clear(vm_c);
+    /* move control to dump */
+    ose_drop(vm_c);             /* drop our own exec command */
+    ose_copyBundle(vm_c, vm_d);
+    ose_clear(vm_c);
 }
 
 void ose_builtin_if(ose_bundle osevm)
 {
-	ose_bundle vm_s = OSEVM_STACK(osevm);
-	ose_bundle vm_e = OSEVM_ENV(osevm);
-	ose_bundle vm_c = OSEVM_CONTROL(osevm);
-	ose_pushInt32(vm_s, 0);
-	ose_neq(vm_s);
-	ose_roll(vm_s);
-	ose_drop(vm_s);
-	ose_copyBundle(vm_e, vm_s);
-	ose_swap(vm_s);
-	ose_pushMessage(vm_c, "/!/exec", 7, 0);
-	ose_swap(vm_c);
+    ose_bundle vm_s = OSEVM_STACK(osevm);
+    ose_bundle vm_e = OSEVM_ENV(osevm);
+    ose_bundle vm_c = OSEVM_CONTROL(osevm);
+    ose_pushInt32(vm_s, 0);
+    ose_neq(vm_s);
+    ose_roll(vm_s);
+    ose_drop(vm_s);
+    ose_copyBundle(vm_e, vm_s);
+    ose_swap(vm_s);
+    ose_pushString(vm_c, "/!/exec");
+    ose_swap(vm_c);
 }
 
 void ose_builtin_dotimes(ose_bundle osevm)
 {
-	ose_bundle vm_c = OSEVM_CONTROL(osevm);
-	ose_bundle vm_s = OSEVM_STACK(osevm);
-	int32_t n = ose_popInt32(vm_s);
-	if(n > 0){
-		if(strcmp(ose_peekAddress(vm_c), "/!/dotimes")){
-			ose_pushString(vm_c, "/dotimes");
-		}
-		ose_pushInt32(vm_c, n - 1);
-		ose_copyElem(vm_s, vm_c);
-		ose_pushMessage(vm_c, "/!/exec", 7, 0);
-		ose_pushMessage(vm_c, "/!/dotimes", 10, 0);
-	}else{
-		ose_drop(vm_s);
-	}
+    ose_bundle vm_c = OSEVM_CONTROL(osevm);
+    ose_bundle vm_s = OSEVM_STACK(osevm);
+    int32_t n = ose_popInt32(vm_s);
+    if(n > 0)
+    {
+        ose_pushInt32(vm_c, n - 1);
+        ose_copyElem(vm_s, vm_c);
+        ose_pushString(vm_c, "/!/exec");
+        ose_pushString(vm_c, "/!/dotimes");
+    }
+    else
+    {
+        ose_drop(vm_s);
+    }
 }
 
 void ose_builtin_copyBundle(ose_bundle osevm)
 {
-	ose_bundle vm_s = OSEVM_STACK(osevm);
-	ose_rassert(ose_peekType(vm_s) == OSETT_MESSAGE, 1);
-	ose_rassert(ose_isStringType(ose_peekMessageArgType(vm_s)) == OSETT_TRUE, 1);
-	ose_constbundle src = ose_enter(osevm, ose_peekString(vm_s));
-	ose_drop(vm_s);
+    ose_bundle vm_s = OSEVM_STACK(osevm);
+    ose_rassert(ose_peekType(vm_s) == OSETT_MESSAGE, 1);
+    ose_rassert(ose_isStringType(ose_peekMessageArgType(vm_s)) == OSETT_TRUE, 1);
+    ose_constbundle src = ose_enter(osevm, ose_peekString(vm_s));
+    ose_drop(vm_s);
 
-	ose_rassert(ose_peekType(vm_s) == OSETT_MESSAGE, 1);
-	ose_rassert(ose_isStringType(ose_peekMessageArgType(vm_s)) == OSETT_TRUE, 1);
-	ose_bundle dest = ose_enter(osevm, ose_peekString(vm_s));
-	ose_drop(vm_s);
+    ose_rassert(ose_peekType(vm_s) == OSETT_MESSAGE, 1);
+    ose_rassert(ose_isStringType(ose_peekMessageArgType(vm_s)) == OSETT_TRUE, 1);
+    ose_bundle dest = ose_enter(osevm, ose_peekString(vm_s));
+    ose_drop(vm_s);
 
-	ose_copyBundle(src, dest);
+    ose_copyBundle(src, dest);
 }
 
 void ose_builtin_appendBundle(ose_bundle osevm)
 {
-	ose_bundle vm_s = OSEVM_STACK(osevm);
-	ose_rassert(ose_peekType(vm_s) == OSETT_MESSAGE, 1);
-	ose_rassert(ose_isStringType(ose_peekMessageArgType(vm_s)) == OSETT_TRUE, 1);
-	ose_bundle src = ose_enter(osevm, ose_peekString(vm_s));
-	ose_drop(vm_s);
+    ose_bundle vm_s = OSEVM_STACK(osevm);
+    ose_rassert(ose_peekType(vm_s) == OSETT_MESSAGE, 1);
+    ose_rassert(ose_isStringType(ose_peekMessageArgType(vm_s)) == OSETT_TRUE, 1);
+    ose_bundle src = ose_enter(osevm, ose_peekString(vm_s));
+    ose_drop(vm_s);
 
-	ose_rassert(ose_peekType(vm_s) == OSETT_MESSAGE, 1);
-	ose_rassert(ose_isStringType(ose_peekMessageArgType(vm_s)) == OSETT_TRUE, 1);
-	ose_bundle dest = ose_enter(osevm, ose_peekString(vm_s));
-	ose_drop(vm_s);
+    ose_rassert(ose_peekType(vm_s) == OSETT_MESSAGE, 1);
+    ose_rassert(ose_isStringType(ose_peekMessageArgType(vm_s)) == OSETT_TRUE, 1);
+    ose_bundle dest = ose_enter(osevm, ose_peekString(vm_s));
+    ose_drop(vm_s);
 
-	ose_appendBundle(src, dest);
+    ose_appendBundle(src, dest);
 }
 
 void ose_builtin_replaceBundle(ose_bundle osevm)
 {
-	ose_bundle vm_s = OSEVM_STACK(osevm);
-	ose_rassert(ose_peekType(vm_s) == OSETT_MESSAGE, 1);
-	ose_rassert(ose_isStringType(ose_peekMessageArgType(vm_s)) == OSETT_TRUE, 1);
-	ose_bundle src = ose_enter(osevm, ose_peekString(vm_s));
-	ose_drop(vm_s);
+    ose_bundle vm_s = OSEVM_STACK(osevm);
+    ose_rassert(ose_peekType(vm_s) == OSETT_MESSAGE, 1);
+    ose_rassert(ose_isStringType(ose_peekMessageArgType(vm_s)) == OSETT_TRUE, 1);
+    ose_bundle src = ose_enter(osevm, ose_peekString(vm_s));
+    ose_drop(vm_s);
 
-	ose_rassert(ose_peekType(vm_s) == OSETT_MESSAGE, 1);
-	ose_rassert(ose_isStringType(ose_peekMessageArgType(vm_s)) == OSETT_TRUE, 1);
-	ose_bundle dest = ose_enter(osevm, ose_peekString(vm_s));
-	ose_drop(vm_s);
+    ose_rassert(ose_peekType(vm_s) == OSETT_MESSAGE, 1);
+    ose_rassert(ose_isStringType(ose_peekMessageArgType(vm_s)) == OSETT_TRUE, 1);
+    ose_bundle dest = ose_enter(osevm, ose_peekString(vm_s));
+    ose_drop(vm_s);
 
-	ose_replaceBundle(src, dest);
+    ose_replaceBundle(src, dest);
 }
 
 void ose_builtin_moveElem(ose_bundle osevm)
 {
-	ose_bundle vm_s = OSEVM_STACK(osevm);
-	ose_rassert(ose_peekType(vm_s) == OSETT_MESSAGE, 1);
-	ose_rassert(ose_isStringType(ose_peekMessageArgType(vm_s)) == OSETT_TRUE, 1);
-	ose_bundle src = ose_enter(osevm, ose_peekString(vm_s));
-	ose_drop(vm_s);
+    ose_bundle vm_s = OSEVM_STACK(osevm);
+    ose_rassert(ose_peekType(vm_s) == OSETT_MESSAGE, 1);
+    ose_rassert(ose_isStringType(ose_peekMessageArgType(vm_s)) == OSETT_TRUE, 1);
+    ose_bundle src = ose_enter(osevm, ose_peekString(vm_s));
+    ose_drop(vm_s);
 
-	ose_rassert(ose_peekType(vm_s) == OSETT_MESSAGE, 1);
-	ose_rassert(ose_isStringType(ose_peekMessageArgType(vm_s)) == OSETT_TRUE, 1);
-	ose_bundle dest = ose_enter(osevm, ose_peekString(vm_s));
-	ose_drop(vm_s);
+    ose_rassert(ose_peekType(vm_s) == OSETT_MESSAGE, 1);
+    ose_rassert(ose_isStringType(ose_peekMessageArgType(vm_s)) == OSETT_TRUE, 1);
+    ose_bundle dest = ose_enter(osevm, ose_peekString(vm_s));
+    ose_drop(vm_s);
 
-	ose_moveElem(src, dest);
+    ose_moveElem(src, dest);
 }
 
 void ose_builtin_copyElem(ose_bundle osevm)
 {
-	ose_bundle vm_s = OSEVM_STACK(osevm);
-	ose_rassert(ose_peekType(vm_s) == OSETT_MESSAGE, 1);
-	ose_rassert(ose_isStringType(ose_peekMessageArgType(vm_s)) == OSETT_TRUE, 1);
-	ose_constbundle src = ose_enter(osevm, ose_peekString(vm_s));
-	ose_drop(vm_s);
+    ose_bundle vm_s = OSEVM_STACK(osevm);
+    ose_rassert(ose_peekType(vm_s) == OSETT_MESSAGE, 1);
+    ose_rassert(ose_isStringType(ose_peekMessageArgType(vm_s)) == OSETT_TRUE, 1);
+    ose_constbundle src = ose_enter(osevm, ose_peekString(vm_s));
+    ose_drop(vm_s);
 
-	ose_rassert(ose_peekType(vm_s) == OSETT_MESSAGE, 1);
-	ose_rassert(ose_isStringType(ose_peekMessageArgType(vm_s)) == OSETT_TRUE, 1);
-	ose_bundle dest = ose_enter(osevm, ose_peekString(vm_s));
-	ose_drop(vm_s);
+    ose_rassert(ose_peekType(vm_s) == OSETT_MESSAGE, 1);
+    ose_rassert(ose_isStringType(ose_peekMessageArgType(vm_s)) == OSETT_TRUE, 1);
+    ose_bundle dest = ose_enter(osevm, ose_peekString(vm_s));
+    ose_drop(vm_s);
 
-	ose_copyElem(src, dest);
+    ose_copyElem(src, dest);
 }
 
 void ose_builtin_apply(ose_bundle osevm)
 {
-	ose_bundle vm_i = OSEVM_INPUT(osevm);
-	ose_bundle vm_s = OSEVM_STACK(osevm);
-	ose_bundle vm_e = OSEVM_ENV(osevm);
-	ose_bundle vm_c = OSEVM_CONTROL(osevm);
-	ose_bundle vm_d = OSEVM_DUMP(osevm);
+    ose_bundle vm_i = OSEVM_INPUT(osevm);
+    ose_bundle vm_s = OSEVM_STACK(osevm);
+    ose_bundle vm_e = OSEVM_ENV(osevm);
+    ose_bundle vm_c = OSEVM_CONTROL(osevm);
+    ose_bundle vm_d = OSEVM_DUMP(osevm);
 
-	ose_rassert(ose_bundleHasAtLeastNElems(vm_s, 1) == OSETT_TRUE, 1);
-	while(1){
-		char elemtype = ose_peekType(vm_s);
-		if(elemtype == OSETT_BUNDLE){
-			/* move input to dump */
-			ose_copyBundle(vm_i, vm_d);
-			ose_clear(vm_i);
+    ose_rassert(ose_bundleHasAtLeastNElems(vm_s, 1) == OSETT_TRUE, 1);
+    while(1)
+    {
+        char elemtype = ose_peekType(vm_s);
+        if(elemtype == OSETT_BUNDLE)
+        {
+            /* move input to dump */
+            ose_copyBundle(vm_i, vm_d);
+            ose_clear(vm_i);
+            {
+                /* move the contents of the bundle on the stack to
+                   the input, and unpack it in reverse order */
+                char *sp = ose_getBundlePtr(vm_s);
+                char *ip = ose_getBundlePtr(vm_i);
+                int32_t stackoffset = OSE_BUNDLE_HEADER_LEN;
+                int32_t stacksize = ose_readInt32(vm_s, -4);
+                ose_assert(stackoffset < stacksize);
+                int32_t s = ose_readInt32(vm_s, stackoffset);
+                while(stackoffset + s + 4 < stacksize)
+                {
+                    stackoffset += s + 4;
+                    s = ose_readInt32(vm_s, stackoffset);
+                }
 
-			/* move bundle on the stack to input */
-			/* ose_moveElem(vm_s, vm_i); */
-			/* if(ose_peekType(vm_i) == OSETT_MESSAGE){ */
-			/* 	if(ose_peekMessageArgType(vm_i) == OSETT_BLOB){ */
-			/* 		// need a test here to make sure */
-			/* 		// the blob contains a bundle member */
-			/* 		if(1){ */
-			/* 			ose_blobToElem(vm_i); */
-			/* 			ose_popAllDrop(vm_i); */
-			/* 		} */
-			/* 	} */
-			/* }else{ */
-			/* 	ose_popAllDrop(vm_i); */
-			/* } */
-			{
-				/* move the contents of the bundle on the stack to the input, */
-				/* and unpack it in reverse order */
-				char *sp = ose_getBundlePtr(vm_s);
-				char *ip = ose_getBundlePtr(vm_i);
-				int32_t stackoffset = OSE_BUNDLE_HEADER_LEN;
-				int32_t stacksize = ose_readInt32(vm_s, -4);
-				ose_assert(stackoffset < stacksize);
-				int32_t s = ose_readInt32(vm_s, stackoffset);
-				/* int32_t onm1 = stackoffset; */
-				/* int32_t snm1 = s; */
-				while(stackoffset + s + 4 < stacksize){
-					/* onm1 = stackoffset; */
-					/* snm1 = s; */
-					stackoffset += s + 4;
-					s = ose_readInt32(vm_s, stackoffset);
-				}
+                int32_t o1, o2;
+                o1 = stackoffset + 4 + OSE_BUNDLE_HEADER_LEN;
+                ose_incSize(vm_i, s - OSE_BUNDLE_HEADER_LEN);
+                o2 = ose_readInt32(vm_i, -4);
+                int32_t end = o1 + s - OSE_BUNDLE_HEADER_LEN;;
+                while(o1 < end)
+                {
+                    int32_t ss = ose_readInt32(vm_s, o1);
+                    o2 -= ss + 4;
+                    memcpy(ip + o2, sp + o1, ss + 4);
+                    o1 += ss + 4;
+                }
+                ose_dropAtOffset(vm_s, stackoffset);
+            }
 
-				int32_t o1, o2;
-				/* if(!strncmp(sp + stackoffset + 4, */
-				/* 	    OSE_BUNDLE_ID, */
-				/* 	    OSE_BUNDLE_ID_LEN)){ */
-				/* bundle */
-				o1 = stackoffset + 4 + OSE_BUNDLE_HEADER_LEN;
-				/* }else{ */
-				/* 	// message */
-				/* 	int32_t to, ntt, lto, po, lpo; */
-				/* 	ose_getNthPayloadItem(vm_s, 1, stackoffset, */
-				/* 			      &to, &ntt, &lto, &po, &lpo); */
-				/* 	if(ose_readByte(vm_s, lto) == OSETT_BLOB){ */
-				/* 		s = ose_readInt32(vm_s, lpo); */
-				/* 		o1 = lpo + 4 + OSE_BUNDLE_HEADER_LEN; */
-				/* 	}else{ */
-				/* 		// this can potentially enter compiled */
-				/* 		// native code */
-				/* 	} */
-				/* } */
-				ose_incSize(vm_i, s - OSE_BUNDLE_HEADER_LEN);
-				o2 = ose_readInt32(vm_i, -4);
-				int32_t end = o1 + s - OSE_BUNDLE_HEADER_LEN;;
-				while(o1 < end){
-					int32_t ss = ose_readInt32(vm_s, o1);
-					o2 -= ss + 4;
-					memcpy(ip + o2, sp + o1, ss + 4);
-					o1 += ss + 4;
-				}
-				ose_dropAtOffset(vm_s, stackoffset);
-			}
+            /* copy environment to dump */
+            ose_copyBundle(vm_e, vm_d);
 
-			/* copy environment to dump */
-			ose_copyBundle(vm_e, vm_d);
+            /* move stack to dump */
+            /* ose_pushBundle(vm_d); */
 
-			/* move stack to dump */
-			ose_pushBundle(vm_d);
-
-			/* move control to dump */
-			ose_drop(vm_c);
-			ose_copyBundle(vm_c, vm_d);
-			ose_clear(vm_c);
-			break;
-		}else if(elemtype == OSETT_MESSAGE){
-			int32_t o = ose_getLastBundleElemOffset(vm_s);
-			int32_t to, ntt, lto, po, lpo;
-			ose_getNthPayloadItem(vm_s, 1, o,
-					      &to, &ntt, &lto, &po, &lpo);
-			/*char itemtype = ose_peekMessageArgType(vm_s); */
-			char itemtype = ose_getBundlePtr(vm_s)[lto];
-			const char * const p = ose_getBundlePtr(vm_s) + lpo;
-			if(ose_isStringType(itemtype) == OSETT_TRUE){
-				int32_t mo = ose_getFirstOffsetForPMatch(vm_e, p);
-				if(mo >= OSE_BUNDLE_HEADER_LEN){
-					ose_pushString(vm_c, p);
-					ose_push(vm_c);
-					ose_dropAtOffset(vm_s, o);
-					ose_copyElemAtOffset(mo, vm_e, vm_s);
-					continue;
-				}
-				/* if it wasn't present in env, lookup in symtab */
-				else{
-					ose_fn f = ose_symtab_lookup_fn(p);
-					if(f){
-						ose_dropAtOffset(vm_s, o);
-						f(osevm);
-						break;
-					}else{
-						break;
-					}
-				}
-			}else if(itemtype == OSETT_BLOB){
-				int32_t len = ose_ntohl(*((int32_t *)p));
-				if(len > OSE_BUNDLE_HEADER_LEN
-				   && !strncmp(OSE_BUNDLE_ID, p + 4, 7)){
-					/* blob is a bundle */
-					ose_blobToElem(vm_s);
-					continue;
-				}else{
-					/* blob is not a bundle */
-					int32_t o = p - ose_getBundlePtr(vm_s);
-					ose_alignPtr(vm_s, o + 4);
-					ose_fn f = (ose_fn)ose_readAlignedPtr(vm_s, o + 4);
-					if(f){
-						ose_drop(vm_s);
-						f(osevm);
-						break;
-					}else{
-						break;
-					}
-				}
-			}else{
-				ose_assert(0 && "found an unexpected type during application");
-				break;
-			}
-		}else{
-			ose_assert(0 && "encountered unknown element type!");
-			break;
-		}
-	}
+            /* move control to dump */
+            ose_drop(vm_c);
+            /* ose_builtin_return leaves the env on the stack */
+            ose_pushString(vm_c, "/!/drop");
+            ose_copyBundle(vm_c, vm_d);
+            ose_clear(vm_c);
+            break;
+        }
+        else if(elemtype == OSETT_MESSAGE)
+        {
+            int32_t o = ose_getLastBundleElemOffset(vm_s);
+            int32_t to, ntt, lto, po, lpo;
+            ose_getNthPayloadItem(vm_s, 1, o,
+                                  &to, &ntt, &lto, &po, &lpo);
+            /*char itemtype = ose_peekMessageArgType(vm_s); */
+            char itemtype = ose_getBundlePtr(vm_s)[lto];
+            const char * const p = ose_getBundlePtr(vm_s) + lpo;
+            /* if(ose_isStringType(itemtype) == OSETT_TRUE) */
+            if(0)
+            {
+                /* int32_t mo = ose_getFirstOffsetForPMatch(vm_e, p); */
+                /* if(mo >= OSE_BUNDLE_HEADER_LEN){ */
+                /* 	ose_pushString(vm_c, p); */
+                /* 	ose_push(vm_c); */
+                /* 	ose_dropAtOffset(vm_s, o); */
+                /* 	ose_copyElemAtOffset(mo, vm_e, vm_s); */
+                /* 	continue; */
+                /* } */
+                /* /\* if it wasn't present in env, lookup in symtab *\/ */
+                /* else{ */
+                /* 	ose_fn f = ose_symtab_lookup_fn(p); */
+                /* 	if(f){ */
+                /* 		ose_dropAtOffset(vm_s, o); */
+                /* 		//f(osevm); */
+                /*         ose_pushAlignedPtr(vm_s, f); */
+                /*         continue; */
+                /* 		//break; */
+                /* 	}else{ */
+                /* 		break; */
+                /* 	} */
+                /* } */
+                OSEVM_LOOKUP(osevm);
+                if(ose_peekType(vm_s) == OSETT_MESSAGE
+                   && ose_peekMessageArgType(vm_s) == OSETT_STRING)
+                {
+                    break;
+                }
+                else
+                {
+                    continue;
+                }
+            }
+            else if(itemtype == OSETT_BLOB)
+            {
+                int32_t len = ose_ntohl(*((int32_t *)p));
+                if(len >= OSE_BUNDLE_HEADER_LEN
+                   && !strncmp(OSE_BUNDLE_ID,
+                               p + 4,
+                               OSE_BUNDLE_ID_LEN))
+                {
+                    /* blob is a bundle */
+                    ose_blobToElem(vm_s);
+                    continue;
+                }
+                else
+                {
+                    /* blob is not a bundle */
+                    int32_t o = p - ose_getBundlePtr(vm_s);
+                    ose_alignPtr(vm_s, o + 4);
+                    ose_fn f = (ose_fn)ose_readAlignedPtr(vm_s, o + 4);
+                    if(f)
+                    {
+                        ose_drop(vm_s);
+                        f(osevm);
+                        break;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                /* 
+                   If there's a message that contains something
+                   other than a blob (which might contain a bundle
+                   or a function pointer), we just leave it on the
+                   stack. Effectively, this means that "application"
+                   of a string, int, float, etc. means that the
+                   object takes no arguments and returns itself.
+                */
+                break;
+            }
+        }
+        else
+        {
+            ose_assert(0 && "encountered unknown element type!");
+            break;
+        }
+    }
 }
 
 void ose_builtin_map(ose_bundle osevm)
 {
-	ose_bundle vm_s = OSEVM_STACK(osevm);
-	ose_bundle vm_c = OSEVM_CONTROL(osevm);
-	ose_swap(vm_s);
-	char t = ose_peekType(vm_s);
-	if(t == OSETT_BUNDLE){
-		ose_countItems(vm_s);
-		int32_t n = ose_popInt32(vm_s);
-		ose_popAll(vm_s);
-		int i = 0, j = -1;
-		ose_pushBundle(vm_s);
-		// ENm1 ... E0 B B -
-		for(i = 0; i < n; i++){
-			// B1 => items
-			// B0 => elems
-			ose_rot(vm_s); // ENm1 ... B1 B0 E0 -
-			ose_countItems(vm_s);
-			int jj = ose_popInt32(vm_s);
-			if(jj == 0){
-				for(i = 0; i < n + 3; i++){
-					ose_drop(vm_s);
-				}
-				return;
-			}else if(j > 0 && jj != j){
-				ose_rassert(0 && "arguments to map must be the same length", 1);
-				break;
-			}else{
-				ose_pop(vm_s); // ENm1 ... B1 B0 E0 I0 -
-				ose_notrot(vm_s); // ENm1 ... B1 I0 B0 E0 -
-				ose_push(vm_s); // ENm1 ... B1 I0 B0 -
-				ose_notrot(vm_s); // ENm1 ... B0 B1 I0 -
-				ose_push(vm_s); // ENm1 ... B0 B1 -
-				ose_swap(vm_s); // ENm1 ... B1 B0 -
-			}
-		}
-		// B1 B0 -
-		if(!strcmp(ose_peekAddress(vm_c), "/!")){
-			ose_drop(vm_c);
-			ose_pushMessage(vm_c, "/!/map", 6, 0);
-		}
-		ose_copyElem(vm_s, vm_c);
-		ose_drop(vm_s);
-		ose_swap(vm_s);
-		ose_copyElem(vm_s, vm_c);
-		ose_swap(vm_c);
-		ose_pushMessage(vm_c, "/!/apply", 8, 0);
-		ose_pushMessage(vm_c, "/!/map", 6, 0);
-		ose_push(vm_s);
-		ose_unpackDrop(vm_s);
-	}else{
-		ose_countItems(vm_s);
-		if(ose_popInt32(vm_s) > 0){
-			ose_swap(vm_s);
-			ose_copyElem(vm_s, vm_c);
-			ose_swap(vm_s);
-			ose_pop(vm_s);
-			ose_swap(vm_s);
-			ose_copyElem(vm_s, vm_c);
-			ose_drop(vm_s);
-			ose_swap(vm_s);
-			ose_pushMessage(vm_c, "/!/apply", 8, 0);
-			ose_pushMessage(vm_c, "/!/map", 6, 0);
-		}else{
-			;
-		}
-		
-		
-	}
+    ose_bundle vm_s = OSEVM_STACK(osevm);
+    ose_bundle vm_c = OSEVM_CONTROL(osevm);
+    ose_rassert(ose_bundleHasAtLeastNElems(vm_s, 2) == OSETT_TRUE, 1);
+    ose_swap(vm_s);
+    char t = ose_peekType(vm_s);
+    if(t == OSETT_BUNDLE)
+    {
+        ose_countItems(vm_s);
+        int32_t n = ose_popInt32(vm_s);
+        ose_popAll(vm_s);
+        int i = 0, j = -1;
+        ose_pushBundle(vm_s);
+        /* ENm1 ... E0 B B - */
+        /* B1 => items */
+        /* B0 => elems */
+        for(i = 0; i < n; i++)
+        {
+            /* ENm1 ... E0 B1 B0 - */
+            ose_rot(vm_s);
+            /* ENm1 ... B1 B0 E0 - */
+            ose_countItems(vm_s);
+            int jj = ose_popInt32(vm_s);
+            if(jj == 0)
+            {
+                for(i = 0; i < n + 3; i++)
+                {
+                    ose_drop(vm_s);
+                }
+                return;
+            }
+            else if(j > 0 && jj != j)
+            {
+                ose_rassert(0 && "arguments to map must be the same length", 1);
+                break;
+            }
+            else
+            {
+                ose_pop(vm_s);  /* ENm1 ... B1 B0 E0 I0 - */
+                ose_notrot(vm_s); /* ENm1 ... B1 I0 B0 E0 - */
+                ose_push(vm_s); /* ENm1 ... B1 I0 B0 - */
+                ose_notrot(vm_s); /* ENm1 ... B0 B1 I0 - */
+                ose_push(vm_s); /* ENm1 ... B0 B1 - */
+                ose_swap(vm_s); /* ENm1 ... B1 B0 - */
+            }
+        }
+        /* B1 B0 - */
+        /* if(!strcmp(ose_peekAddress(vm_c), "/!")) */
+        /* { */
+        /*     ose_drop(vm_c); */
+        /*     ose_pushMessage(vm_c, "/!/map", 6, 0); */
+        /* } */
+        ose_copyElem(vm_s, vm_c);
+        ose_drop(vm_s);
+        ose_swap(vm_s);
+        ose_copyElem(vm_s, vm_c);
+        ose_swap(vm_c);
+        ose_pushString(vm_c, "/!/apply");
+        ose_pushString(vm_c, "/!/map");
+        ose_push(vm_s);
+        ose_unpackDrop(vm_s);
+    }
+    else
+    {
+        ose_countItems(vm_s);
+        if(ose_popInt32(vm_s) > 0)
+        {
+            ose_swap(vm_s);
+            ose_copyElem(vm_s, vm_c);
+            ose_swap(vm_s);
+            ose_pop(vm_s);
+            ose_swap(vm_s);
+            ose_copyElem(vm_s, vm_c);
+            ose_drop(vm_s);
+            ose_swap(vm_s);
+            ose_pushString(vm_c, "/!/apply");
+            ose_pushString(vm_c, "/!/map");
+        }
+        else
+        {
+            ;
+        }
+    }
 }
 
 void ose_builtin_return(ose_bundle osevm)
 {
-	ose_bundle vm_i = OSEVM_INPUT(osevm);
-	ose_bundle vm_s = OSEVM_STACK(osevm);
-	ose_bundle vm_e = OSEVM_ENV(osevm);
-	ose_bundle vm_c = OSEVM_CONTROL(osevm);
-        ose_bundle vm_d = OSEVM_DUMP(osevm);
+    ose_bundle vm_i = OSEVM_INPUT(osevm);
+    ose_bundle vm_s = OSEVM_STACK(osevm);
+    ose_bundle vm_e = OSEVM_ENV(osevm);
+    ose_bundle vm_c = OSEVM_CONTROL(osevm);
+    ose_bundle vm_d = OSEVM_DUMP(osevm);
 
-#define OSE_USE_OPTIMIZED_CODE
+    /* #define OSE_USE_OPTIMIZED_CODE */
 #ifdef OSE_USE_OPTIMIZED_CODE
-	char *dp = ose_getBundlePtr(vm_d);
-	char *cp = ose_getBundlePtr(vm_c);
-	char *sp = ose_getBundlePtr(vm_s);
-	char *ep = ose_getBundlePtr(vm_e);
-	char *ip = ose_getBundlePtr(vm_i);
+    char *dp = ose_getBundlePtr(vm_d);
+    char *cp = ose_getBundlePtr(vm_c);
+    char *sp = ose_getBundlePtr(vm_s);
+    char *ep = ose_getBundlePtr(vm_e);
+    char *ip = ose_getBundlePtr(vm_i);
 
-	int32_t onm3, onm2, onm1, on, snm3, snm2, snm1, sn;
-	extern void be4(ose_bundle bundle,
-			int32_t *onm3,
-			int32_t *snm3,
-			int32_t *onm2,
-			int32_t *snm2,
-			int32_t *onm1,
-			int32_t *snm1,
-			int32_t *on,
-			int32_t *sn);
-	be4(vm_d, &onm3, &snm3, &onm2, &snm2, &onm1, &snm1, &on, &sn);
+    int32_t onm3, onm2, onm1, on, snm3, snm2, snm1, sn;
+    extern void be4(ose_bundle bundle,
+                    int32_t *onm3,
+                    int32_t *snm3,
+                    int32_t *onm2,
+                    int32_t *snm2,
+                    int32_t *onm1,
+                    int32_t *snm1,
+                    int32_t *on,
+                    int32_t *sn);
+    be4(vm_d, &onm3, &snm3, &onm2, &snm2, &onm1, &snm1, &on, &sn);
 	
-	ose_clear(vm_c);
-	ose_incSize(vm_c, sn - OSE_BUNDLE_HEADER_LEN);
-	memcpy(cp + OSE_BUNDLE_HEADER_LEN,
-	       dp + on + 4 + OSE_BUNDLE_HEADER_LEN,
-	       sn - OSE_BUNDLE_HEADER_LEN);
+    ose_clear(vm_c);
+    ose_incSize(vm_c, sn - OSE_BUNDLE_HEADER_LEN);
+    memcpy(cp + OSE_BUNDLE_HEADER_LEN,
+           dp + on + 4 + OSE_BUNDLE_HEADER_LEN,
+           sn - OSE_BUNDLE_HEADER_LEN);
 
-	ose_incSize(vm_s, snm1 - OSE_BUNDLE_HEADER_LEN);
-	memmove(sp + OSE_BUNDLE_HEADER_LEN + (snm1 - OSE_BUNDLE_HEADER_LEN),
-		sp + OSE_BUNDLE_HEADER_LEN,
-		ose_readInt32(vm_s, -4) - OSE_BUNDLE_HEADER_LEN);
-	memcpy(dp + onm1 + 4 + OSE_BUNDLE_HEADER_LEN,
-	       sp + OSE_BUNDLE_HEADER_LEN,
-	       snm1 - OSE_BUNDLE_HEADER_LEN);
+    ose_incSize(vm_s, snm1 - OSE_BUNDLE_HEADER_LEN);
+    memmove(sp + OSE_BUNDLE_HEADER_LEN + (snm1 - OSE_BUNDLE_HEADER_LEN),
+            sp + OSE_BUNDLE_HEADER_LEN,
+            ose_readInt32(vm_s, -4) - OSE_BUNDLE_HEADER_LEN);
+    memcpy(dp + onm1 + 4 + OSE_BUNDLE_HEADER_LEN,
+           sp + OSE_BUNDLE_HEADER_LEN,
+           snm1 - OSE_BUNDLE_HEADER_LEN);
 
-	ose_clear(vm_e);
-	ose_incSize(vm_e, snm2 - OSE_BUNDLE_HEADER_LEN);
-	memcpy(ep + OSE_BUNDLE_HEADER_LEN,
-	       dp + onm2 + 4 + OSE_BUNDLE_HEADER_LEN,
-	       snm2 - OSE_BUNDLE_HEADER_LEN);
+    ose_clear(vm_e);
+    ose_incSize(vm_e, snm2 - OSE_BUNDLE_HEADER_LEN);
+    memcpy(ep + OSE_BUNDLE_HEADER_LEN,
+           dp + onm2 + 4 + OSE_BUNDLE_HEADER_LEN,
+           snm2 - OSE_BUNDLE_HEADER_LEN);
 
-	ose_clear(vm_i);
-	ose_incSize(vm_i, snm3 - OSE_BUNDLE_HEADER_LEN);
-	memcpy(ip + OSE_BUNDLE_HEADER_LEN,
-	       dp + onm3 + 4 + OSE_BUNDLE_HEADER_LEN,
-	       snm3 - OSE_BUNDLE_HEADER_LEN);
+    ose_clear(vm_i);
+    ose_incSize(vm_i, snm3 - OSE_BUNDLE_HEADER_LEN);
+    memcpy(ip + OSE_BUNDLE_HEADER_LEN,
+           dp + onm3 + 4 + OSE_BUNDLE_HEADER_LEN,
+           snm3 - OSE_BUNDLE_HEADER_LEN);
 
-	int32_t s = snm3 + snm2 + snm1 + sn + 16;
-	memset(dp + onm3, 0, s);
-	ose_decSize(vm_d, s);
+    int32_t s = snm3 + snm2 + snm1 + sn + 16;
+    memset(dp + onm3, 0, s);
+    ose_decSize(vm_d, s);
 #else
-	/* restore control */
-	ose_replaceBundle(vm_d, vm_c);
+    /* restore control */
+    ose_replaceBundle(vm_d, vm_c);
 
-	/* restore stack */
-	ose_bundleAll(vm_s);
-	ose_moveElem(vm_d, vm_s);
-	ose_unpackDrop(vm_s);
-	ose_rollBottom(vm_s);
-	ose_unpackDrop(vm_s);
+    /* put the env on the stack */
+    ose_copyBundle(vm_e, vm_s);
 
-	/* restore env */
-	/*ose_copyBundle(vm_e, vm_s); */
-	ose_replaceBundle(vm_d, vm_e);
+    /* restore env */
+    /*ose_copyBundle(vm_e, vm_s); */
+    ose_replaceBundle(vm_d, vm_e);
 
-	/* restore input */
-	ose_replaceBundle(vm_d, vm_i);
+    /* restore input */
+    ose_replaceBundle(vm_d, vm_i);
 #endif
 }
 
 void ose_builtin_version(ose_bundle osevm)
 {
-	ose_bundle vm_s = OSEVM_STACK(osevm);
-	ose_pushString(vm_s, ose_version);
+    ose_bundle vm_s = OSEVM_STACK(osevm);
+    ose_pushString(vm_s, ose_version);
 #ifdef OSE_DEBUG
-	ose_pushString(vm_s, ose_debug);
+    ose_pushString(vm_s, ose_debug);
 #endif
-	ose_pushString(vm_s, ose_date_compiled);
+    ose_pushString(vm_s, ose_date_compiled);
+}
+
+void ose_builtin_assignStackToEnv(ose_bundle osevm)
+{
+    ose_bundle vm_s = OSEVM_STACK(osevm);
+    ose_bundle vm_e = OSEVM_ENV(osevm);
+
+    ose_pushString(vm_e, ose_peekString(vm_s));
+    while(ose_rollMatch_impl(vm_e))
+    {
+        ose_drop(vm_e);
+        ose_pushString(vm_e, ose_peekString(vm_s));
+    }
+    ose_drop(vm_e);
+    while(1)
+    {
+        int32_t n = ose_getBundleElemCount(vm_s);
+        if(n == 1)
+        {
+            break;
+        }
+        ose_swap(vm_s);
+        if(ose_peekType(vm_s) == OSETT_BUNDLE)
+        {
+            ose_elemToBlob(vm_s);
+        }
+        ose_swap(vm_s);
+        ose_push(vm_s);
+    }
+    ose_moveStringToAddress(vm_s);
+    ose_moveElem(vm_s, vm_e);
+    ose_clear(vm_s);
+}
+
+void ose_builtin_lookupInEnv(ose_bundle osevm)
+{
+    ose_bundle vm_s = OSEVM_STACK(osevm);
+    ose_bundle vm_e = OSEVM_ENV(osevm);
+
+    const char * const address = ose_peekString(vm_s);
+    int32_t mo = 0;
+    {
+        mo = ose_getFirstOffsetForPMatch(vm_e, address);
+    }
+    if(mo >= OSE_BUNDLE_HEADER_LEN)
+    {
+        ose_drop(vm_s);
+        ose_copyElemAtOffset(mo, vm_e, vm_s);
+    }
+    /* if it wasn't present in env, lookup in symtab */
+    else
+    {
+        const ose_fn f = ose_symtab_lookup_fn(address);
+        if(f)
+        {
+            ose_drop(vm_s);               
+            ose_pushAlignedPtr(vm_s, (void *)f);
+        }else
+        {
+            ;
+        }
+    }
+}
+
+void ose_builtin_funcall(ose_bundle osevm)
+{
+    OSEVM_LOOKUP(osevm);
+    ose_builtin_apply(osevm);
+}
+
+void ose_builtin_quote(ose_bundle osevm)
+{
+    ;
+}
+
+void ose_builtin_copyContextBundle(ose_bundle osevm)
+{
+    ose_bundle vm_s = OSEVM_STACK(osevm);
+    const char * const str = ose_peekString(vm_s);
+    ose_bundle src = ose_enter(osevm, str);
+    ose_bundle dest = vm_s;
+    ose_drop(vm_s);
+    ose_copyBundle(src, dest);
+}
+
+void ose_builtin_appendToContextBundle(ose_bundle osevm)
+{
+    ose_bundle vm_s = OSEVM_STACK(osevm);
+    const char * const str = ose_peekString(vm_s);
+    ose_bundle src = vm_s;
+    ose_bundle dest = ose_enter(osevm, str);
+    ose_drop(vm_s);
+    ose_appendBundle(src, dest);	
+}
+
+void ose_builtin_replaceContextBundle(ose_bundle osevm)
+{
+    ose_bundle vm_s = OSEVM_STACK(osevm);
+    const char * const str = ose_peekString(vm_s);
+    ose_bundle src = vm_s;
+    ose_bundle dest = ose_enter(osevm, str);
+    ose_drop(vm_s);
+    ose_replaceBundle(src, dest);
+}
+
+void ose_builtin_moveElemToContextBundle(ose_bundle osevm)
+{
+    ose_bundle vm_s = OSEVM_STACK(osevm);
+    const char * const str = ose_peekString(vm_s);
+    ose_bundle src = vm_s;
+    ose_bundle dest = ose_enter(osevm, str);
+    ose_drop(vm_s);
+    ose_moveElem(src, dest);
+}
+
+void ose_builtin_toInt32(ose_bundle osevm)
+{
+    ose_bundle vm_s = OSEVM_STACK(osevm);
+    {
+        const char t = ose_peekMessageArgType(vm_s);
+        switch(t)
+        {
+        case OSETT_INT32:
+        {
+            ;
+        }
+        break;
+        case OSETT_FLOAT:
+        {
+            const float f = ose_popFloat(vm_s);
+            ose_pushInt32(vm_s, (int32_t)f);
+        }
+        break;
+        case OSETT_STRING:
+        {
+            const char * const s = ose_peekString(vm_s);
+            int32_t l;
+            if(*s == '/')
+            {
+                l = strtol(s + 1, NULL, 10);
+            }
+            else
+            {
+                l = strtol(s, NULL, 10);
+            }
+            ose_drop(vm_s);
+            ose_pushInt32(vm_s, l);
+        }
+        break;
+        case OSETT_BLOB:
+        {
+            const char * const b = ose_peekBlob(vm_s);
+            if(ose_ntohl(*((int32_t *)b)) == 4)
+            {
+                int32_t i = ose_ntohl(*((int32_t *)(b + 4)));
+                ose_drop(vm_s);
+                ose_pushInt32(vm_s, i);
+            }
+            else
+            {
+                /* popControlToStack(vm_c, vm_s); */
+            }
+        }
+        break;
+        default: ;
+            /* popControlToStack(vm_c, vm_s); */
+        }
+    }
+}
+
+/**
+ * /f
+ */
+void ose_builtin_toFloat(ose_bundle osevm)
+{
+    ose_bundle vm_s = OSEVM_STACK(osevm);
+    {
+        const char t = ose_peekMessageArgType(vm_s);
+        switch(t)
+        {
+        case OSETT_INT32:
+        {
+            const int32_t i = ose_popInt32(vm_s);
+            ose_pushFloat(vm_s, (float)i);
+        }
+        break;
+        case OSETT_FLOAT:
+        {
+            ;
+        }
+        break;
+        case OSETT_STRING:
+        {
+            const char * const s = ose_peekString(vm_s);
+            float f;
+            if(*s == '/')
+            {
+                f = strtof(s + 1, NULL);
+            }
+            else
+            {
+                f = strtof(s, NULL);
+            }
+            ose_drop(vm_s);
+            ose_pushFloat(vm_s, f);
+        }
+        break;
+        case OSETT_BLOB:
+        {
+            const char * const b = ose_peekBlob(vm_s);
+            if(ose_ntohl(*((int32_t *)b)) == 4)
+            {
+                int32_t i = ose_ntohl(*((int32_t *)(b + 4)));
+                float f = *((float *)&i);
+                ose_drop(vm_s);
+                ose_pushFloat(vm_s, f);
+            }
+            else
+            {
+                /* popControlToStack(vm_c, vm_s); */
+            }
+        }
+        break;
+        default: ;
+            /* popControlToStack(vm_c, vm_s); */
+        }
+    }
+}
+
+/**
+ * /s
+ */
+void ose_builtin_toString(ose_bundle osevm)
+{
+    ose_bundle vm_s = OSEVM_STACK(osevm);
+    {
+        const char t = ose_peekMessageArgType(vm_s);
+        switch(t){
+        case OSETT_INT32:
+        {
+            const int32_t i = ose_popInt32(vm_s);
+            const int32_t n = snprintf(NULL, 0, "%d", i);
+            ose_pushBlob(vm_s, n - 3 >= 0 ? n - 3 : 0, NULL);
+            char *p = ose_peekBlob(vm_s);
+            snprintf(p, n + 1, "%d", i);
+            p--;
+            while(*p != OSETT_BLOB)
+            {
+                p--;
+            }
+            *p = OSETT_STRING;
+        }
+        break;
+        case OSETT_FLOAT:
+        {
+            const float f = ose_popFloat(vm_s);
+            const int32_t n = snprintf(NULL, 0, "%f", f);
+            ose_pushBlob(vm_s, n - 3 >= 0 ? n - 3 : 0, NULL);
+            char *p = ose_peekBlob(vm_s);
+            snprintf(p, n + 1, "%f", f);
+            p--;
+            while(*p != OSETT_BLOB)
+            {
+                p--;
+            }
+            *p = OSETT_STRING;
+        }
+        break;
+        case OSETT_STRING:
+        {
+            ;
+        }
+        break;
+        case OSETT_BLOB:
+        {
+            ose_pushInt32(vm_s, OSETT_STRING);
+            ose_blobToType(vm_s);
+        }
+        break;
+        default: ;
+            /* popControlToStack(vm_c, vm_s); */
+        }
+    }
+}
+
+/**
+ * /b
+ */
+void ose_builtin_toBlob(ose_bundle osevm)
+{
+    ose_bundle vm_s = OSEVM_STACK(osevm);
+    ose_itemToBlob(vm_s);
+}
+
+void ose_builtin_appendByte(ose_bundle osevm)
+{
+    ose_bundle vm_s = OSEVM_STACK(osevm);
+
+#define SLIP_END 0300
+#define SLIP_ESC 0333
+#define SLIP_ESC_END 0334
+#define SLIP_ESC_ESC 0335
+
+    const char * const str = ose_peekString(vm_s);
+    unsigned char c = 0;
+    c = (unsigned char)strtol(str + 1, NULL, 10);
+    const int32_t n = ose_getBundleElemCount(vm_s);
+    if(n == 0)
+    {
+        ose_pushMessage(vm_s,
+                        OSE_ADDRESS_ANONVAL,
+                        OSE_ADDRESS_ANONVAL_LEN,
+                        2,
+                        OSETT_BLOB, 0, NULL,
+                        OSETT_INT32, 1);
+    }
+    else
+    {
+        const char elemtype = ose_peekType(vm_s);
+        if(elemtype == OSETT_BUNDLE)
+        {
+            ose_pushMessage(vm_s,
+                            OSE_ADDRESS_ANONVAL,
+                            OSE_ADDRESS_ANONVAL_LEN,
+                            2,
+                            OSETT_BLOB, 0, NULL,
+                            OSETT_INT32, 1);
+        }
+        else if(elemtype == OSETT_MESSAGE)
+        {
+            if(ose_peekMessageArgType(vm_s) == OSETT_INT32)
+            {
+                ose_pop(vm_s);
+                int32_t state = ose_popInt32(vm_s);
+                if(ose_peekMessageArgType(vm_s)
+                   == OSETT_BLOB)
+                {
+                    switch(state)
+                    {
+                    case 0:
+                        ose_pushInt32(vm_s, 1);
+                        ose_push(vm_s);
+                        break;
+                    case 1:
+                        switch(c)
+                        {
+                        case SLIP_END:
+                            /* done */
+                            break;
+                        case SLIP_ESC:
+                            ose_pushInt32(vm_s, 2);
+                            ose_push(vm_s);
+                            break;
+                        default:
+                            ose_pushBlob(vm_s,
+                                         1,
+                                         (char *)&c);
+                            ose_push(vm_s);
+                            ose_concatenateBlobs(vm_s);
+                            ose_pushInt32(vm_s, 1);
+                            ose_push(vm_s);
+                            break;
+                        }
+                        break;
+                    case 2:
+                        switch(c)
+                        {
+                        case SLIP_ESC_END:
+                        {
+                            const char cc = SLIP_END;	
+                            ose_pushBlob(vm_s,
+                                         1,
+                                         &cc);
+                            ose_push(vm_s);
+                            ose_concatenateBlobs(vm_s);
+                            ose_pushInt32(vm_s, 1);
+                            ose_push(vm_s);
+                        }
+                        break;
+                        case SLIP_ESC_ESC:
+                        {
+                            const char cc = SLIP_ESC;	
+                            ose_pushBlob(vm_s,
+                                         1,
+                                         &cc);
+                            ose_push(vm_s);
+                            ose_concatenateBlobs(vm_s);
+                            ose_pushInt32(vm_s, 1);
+                            ose_push(vm_s);
+                        }
+                        break;
+                        default:
+                            ose_assert(0
+                                       && "SLIP ESC not followed by ESC_END or ESC_ESC.");
+                        }
+                        break;
+                    default:
+                        ose_pushInt32(vm_s, state);
+                        ose_push(vm_s);
+                        ose_pushMessage(vm_s,
+                                        OSE_ADDRESS_ANONVAL,
+                                        OSE_ADDRESS_ANONVAL_LEN,
+                                        2,
+                                        OSETT_BLOB, 0, NULL,
+                                        OSETT_INT32, 1);
+                        break;
+                    }
+                }
+                else
+                {
+                    ose_pushInt32(vm_s, state);
+                    ose_push(vm_s);
+                    ose_pushMessage(vm_s,
+                                    OSE_ADDRESS_ANONVAL,
+                                    OSE_ADDRESS_ANONVAL_LEN,
+                                    2,
+                                    OSETT_BLOB, 0, NULL,
+                                    OSETT_INT32, 1);
+                }
+            }
+            else
+            {
+                ose_pushMessage(vm_s,
+                                OSE_ADDRESS_ANONVAL,
+                                OSE_ADDRESS_ANONVAL_LEN,
+                                2,
+                                OSETT_BLOB, 0, NULL,
+                                OSETT_INT32, 1);
+            }
+        }
+        else
+        {
+            ose_assert(0 && "found something other than "
+                       "a bundle or message");
+        }
+    }
 }

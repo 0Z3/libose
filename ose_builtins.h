@@ -1,21 +1,23 @@
 /*
-Copyright (c) 2019-20 John MacCallum
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+Copyright (c) 2019-21 John MacCallum Permission is hereby granted,
+free of charge, to any person obtaining a copy of this software and
+associated documentation files (the "Software"), to deal in the
+Software without restriction, including without limitation the
+rights to use, copy, modify, merge, publish, distribute, sublicense,
+and/or sell copies of the Software, and to permit persons to whom
+the Software is furnished to do so, subject to the following
+conditions:
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
@@ -79,6 +81,7 @@ OSE_BUILTIN_DECL(sizePayload)
 OSE_BUILTIN_DECL(sizesElems)
 OSE_BUILTIN_DECL(sizesItems)
 OSE_BUILTIN_DECL(sizeTT)
+OSE_BUILTIN_DECL(getAddresses)
 
 OSE_BUILTIN_DECL(blobToElem)
 OSE_BUILTIN_DECL(blobToType)
@@ -108,6 +111,10 @@ OSE_BUILTIN_DECL(pmatch)
 OSE_BUILTIN_DECL(replace)
 OSE_BUILTIN_DECL(assign)
 OSE_BUILTIN_DECL(lookup)
+OSE_BUILTIN_DECL(route)
+OSE_BUILTIN_DECL(routeWithDelegation)
+OSE_BUILTIN_DECL(gather)
+OSE_BUILTIN_DECL(nth)
 
 OSE_BUILTIN_DECL(makeBlob)
 OSE_BUILTIN_DECL(pushBundle)
@@ -149,6 +156,20 @@ void ose_builtin_apply(ose_bundle osevm);
 void ose_builtin_map(ose_bundle osevm);
 void ose_builtin_return(ose_bundle osevm);
 void ose_builtin_version(ose_bundle osevm);
+
+void ose_builtin_assignStackToEnv(ose_bundle osevm);
+void ose_builtin_lookupInEnv(ose_bundle osevm);
+void ose_builtin_funcall(ose_bundle osevm);
+void ose_builtin_quote(ose_bundle osevm);
+void ose_builtin_copyContextBundle(ose_bundle osevm);
+void ose_builtin_appendToContextBundle(ose_bundle osevm);
+void ose_builtin_replaceContextBundle(ose_bundle osevm);
+void ose_builtin_moveElemToContextBundle(ose_bundle osevm);
+void ose_builtin_toInt32(ose_bundle osevm);
+void ose_builtin_toFloat(ose_bundle osevm);
+void ose_builtin_toString(ose_bundle osevm);
+void ose_builtin_toBlob(ose_bundle osevm);
+void ose_builtin_appendByte(ose_bundle osevm);
 
 #ifdef __cplusplus
 }
