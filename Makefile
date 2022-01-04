@@ -9,7 +9,7 @@ all-debug: debug
 
 .PHONY: release 
 release: TARGET=release
-release: ose
+release: ose $(MODULES)
 
 .PHONY: debug
 debug: TARGET=debug
@@ -18,7 +18,7 @@ debug: ose $(MODULES)
 hosts/repl/ose:
 	cd hosts/repl && $(MAKE) $(TARGET)
 
-ose: hosts/repl/ose
+ose: hosts/repl/ose ose_symtab.c
 	mv hosts/repl/ose .
 
 .FORCE:

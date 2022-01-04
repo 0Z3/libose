@@ -179,6 +179,9 @@ struct _ose_symtab_rec {
 #################################################################
 ### Builtins
 #################################################################
+/exec1, OSE_SYMTAB_VALUE(ose_builtin_exec1)
+/exec2, OSE_SYMTAB_VALUE(ose_builtin_exec2)
+/exec3, OSE_SYMTAB_VALUE(ose_builtin_exec3)
 /exec, OSE_SYMTAB_VALUE(ose_builtin_exec)
 /if, OSE_SYMTAB_VALUE(ose_builtin_if)
 /dotimes, OSE_SYMTAB_VALUE(ose_builtin_dotimes)

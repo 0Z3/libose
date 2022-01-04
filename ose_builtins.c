@@ -160,7 +160,39 @@ OSE_BUILTIN_DEFPRED(isNumericType);
 OSE_BUILTIN_DEFPRED(isUnitType);
 OSE_BUILTIN_DEFPRED(isBoolType);
 
-void ose_builtin_exec(ose_bundle osevm)
+void ose_builtin_exec1(ose_bundle osevm)
+{
+    ose_bundle vm_i = OSEVM_INPUT(osevm);
+    ose_bundle vm_s = OSEVM_STACK(osevm);
+    ose_bundle vm_e = OSEVM_ENV(osevm);
+    ose_bundle vm_c = OSEVM_CONTROL(osevm);
+    ose_bundle vm_d = OSEVM_DUMP(osevm);
+
+    /* move input to dump */
+    ose_copyBundle(vm_i, vm_d);
+    ose_clear(vm_i);
+
+    /* move env to dump  */
+    ose_copyBundle(vm_e, vm_d);
+    /* ose_replaceBundle(vm_s, vm_e); */
+
+    /* put topmost stack element into input */
+    ose_moveElem(vm_s, vm_i);
+    if(ose_peekType(vm_i) == OSETT_BUNDLE)
+    {
+    	ose_popAllDrop(vm_i);
+    }
+
+    /* move topmost bundle to env */
+    /* ose_replaceBundle(vm_s, vm_e); */
+
+    /* move control to dump */
+    ose_drop(vm_c);             /* drop our own exec command */
+    ose_copyBundle(vm_c, vm_d);
+    ose_clear(vm_c);
+}
+
+void ose_builtin_exec2(ose_bundle osevm)
 {
     ose_bundle vm_i = OSEVM_INPUT(osevm);
     ose_bundle vm_s = OSEVM_STACK(osevm);
@@ -190,6 +222,46 @@ void ose_builtin_exec(ose_bundle osevm)
     ose_drop(vm_c);             /* drop our own exec command */
     ose_copyBundle(vm_c, vm_d);
     ose_clear(vm_c);
+}
+
+void ose_builtin_exec3(ose_bundle osevm)
+{
+    ose_bundle vm_i = OSEVM_INPUT(osevm);
+    ose_bundle vm_s = OSEVM_STACK(osevm);
+    ose_bundle vm_e = OSEVM_ENV(osevm);
+    ose_bundle vm_c = OSEVM_CONTROL(osevm);
+    ose_bundle vm_d = OSEVM_DUMP(osevm);
+
+    /* move input to dump */
+    ose_copyBundle(vm_i, vm_d);
+    ose_clear(vm_i);
+
+    /* move env to dump  */
+    ose_copyBundle(vm_e, vm_d);
+    /* ose_replaceBundle(vm_s, vm_e); */
+
+    /* put topmost stack element into input */
+    ose_moveElem(vm_s, vm_i);
+    if(ose_peekType(vm_i) == OSETT_BUNDLE)
+    {
+    	ose_popAllDrop(vm_i);
+    }
+
+    /* move topmost bundle to env */
+    ose_replaceBundle(vm_s, vm_e);
+
+    /* unpack topmost bundle onto stack */
+    ose_unpackDrop(vm_s);
+
+    /* move control to dump */
+    ose_drop(vm_c);             /* drop our own exec command */
+    ose_copyBundle(vm_c, vm_d);
+    ose_clear(vm_c);
+}
+
+void ose_builtin_exec(ose_bundle osevm)
+{
+    ose_builtin_exec2(osevm);    
 }
 
 void ose_builtin_if(ose_bundle osevm)
@@ -361,7 +433,8 @@ void ose_builtin_apply(ose_bundle osevm)
             /* move control to dump */
             ose_drop(vm_c);
             /* ose_builtin_return leaves the env on the stack */
-            ose_pushString(vm_c, "/!/drop");
+            /* ose_pushString(vm_c, "/!/drop"); */
+            ose_pushString(vm_c, "/</_e");
             ose_copyBundle(vm_c, vm_d);
             ose_clear(vm_c);
             break;
@@ -685,7 +758,8 @@ void ose_builtin_lookupInEnv(ose_bundle osevm)
         {
             ose_drop(vm_s);               
             ose_pushAlignedPtr(vm_s, (void *)f);
-        }else
+        }
+        else
         {
             ;
         }

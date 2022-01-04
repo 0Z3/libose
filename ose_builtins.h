@@ -142,6 +142,9 @@ OSE_BUILTIN_DECL(isNumericType);
 OSE_BUILTIN_DECL(isUnitType);
 OSE_BUILTIN_DECL(isBoolType);
 
+void ose_builtin_exec1(ose_bundle osevm);
+void ose_builtin_exec2(ose_bundle osevm);
+void ose_builtin_exec3(ose_bundle osevm);
 void ose_builtin_exec(ose_bundle osevm);
 void ose_builtin_if(ose_bundle osevm);
 void ose_builtin_dotimes(ose_bundle osevm);
