@@ -2,7 +2,8 @@ CC=clang
 
 MODULES= \
 modules/lined/ose_lined.so \
-modules/lang/oscbn/ose_oscbn.so
+modules/lang/oscbn/ose_oscbn.so \
+modules/net/udp/ose_udp.so
 
 all: release
 all-debug: debug
