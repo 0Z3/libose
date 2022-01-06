@@ -330,8 +330,9 @@ char ose_getBundleElemType(ose_constbundle bundle,
 }
 
 /************************************************************
- * the read and write functions intentionally do not assert offset >= 0 as they
- * may be used to read and write to locations "behind" the current bundle.
+ * the read and write functions intentionally do not assert offset
+ * >= 0 as they may be used to read and write to locations "behind"
+ * the current bundle.
  ************************************************************/
 
 #ifdef OSE_DEBUG
