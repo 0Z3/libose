@@ -157,12 +157,12 @@
 #define route(var, sym, n)                              \
     (route_mthd(var, sym, n) || route_pfx(var, sym, n))
 
-static void convertKnownStringAddressToAddress(ose_bundle vm_c);
+/* static void convertKnownStringAddressToAddress(ose_bundle vm_c); */
 
-static void popControlToStack(ose_bundle vm_c, ose_bundle vm_s)
-{
-    ose_copyElem(vm_c, vm_s);
-}
+/* static void popControlToStack(ose_bundle vm_c, ose_bundle vm_s) */
+/* { */
+/*     ose_copyElem(vm_c, vm_s); */
+/* } */
 
 void osevm_popInputToControl(ose_bundle osevm)
 {
@@ -791,37 +791,37 @@ static void applyControl(ose_bundle osevm, char *address)
     }
 }
 
-static void convertKnownStringAddressToAddress(ose_bundle vm_c)
-{
-    if(ose_isStringType(ose_peekMessageArgType(vm_c))
-       == OSETT_TRUE)
-    {
-        char *address = ose_peekString(vm_c);
-        route_init(address, ac);
-        if(route(ac, OSEVM_TOK_AT, 1)
-           || route_pfx(ac, OSEVM_TOK_QUOTE, 1)
-           || route(ac, OSEVM_TOK_BANG, 1)
-           || route(ac, OSEVM_TOK_DOLLAR, 1)
-           || route(ac, OSEVM_TOK_GT, 1)
-           || route(ac, OSEVM_TOK_LTLT, 2)
-           || route(ac, OSEVM_TOK_LT, 1)
-           || route(ac, OSEVM_TOK_DASH, 1)
-           || route(ac, OSEVM_TOK_DOT, 1)
-           || route(ac, OSEVM_TOK_COLON, 1)
-           || route(ac, OSEVM_TOK_SCOLON, 1)
-           || route(ac, OSEVM_TOK_PIPE, 1)
-           || route(ac, OSEVM_TOK_OPAR, 1)
-           || route(ac, OSEVM_TOK_CPAR, 1)
-           || route(ac, OSEVM_TOK_i, 1)
-           || route(ac, OSEVM_TOK_f, 1)
-           || route(ac, OSEVM_TOK_s, 1)
-           || route(ac, OSEVM_TOK_b, 1)
-           || route(ac, OSEVM_TOK_AMP, 1))
-        {
-            ose_moveStringToAddress(vm_c);
-        }
-    }
-}
+/* static void convertKnownStringAddressToAddress(ose_bundle vm_c) */
+/* { */
+/*     if(ose_isStringType(ose_peekMessageArgType(vm_c)) */
+/*        == OSETT_TRUE) */
+/*     { */
+/*         char *address = ose_peekString(vm_c); */
+/*         route_init(address, ac); */
+/*         if(route(ac, OSEVM_TOK_AT, 1) */
+/*            || route_pfx(ac, OSEVM_TOK_QUOTE, 1) */
+/*            || route(ac, OSEVM_TOK_BANG, 1) */
+/*            || route(ac, OSEVM_TOK_DOLLAR, 1) */
+/*            || route(ac, OSEVM_TOK_GT, 1) */
+/*            || route(ac, OSEVM_TOK_LTLT, 2) */
+/*            || route(ac, OSEVM_TOK_LT, 1) */
+/*            || route(ac, OSEVM_TOK_DASH, 1) */
+/*            || route(ac, OSEVM_TOK_DOT, 1) */
+/*            || route(ac, OSEVM_TOK_COLON, 1) */
+/*            || route(ac, OSEVM_TOK_SCOLON, 1) */
+/*            || route(ac, OSEVM_TOK_PIPE, 1) */
+/*            || route(ac, OSEVM_TOK_OPAR, 1) */
+/*            || route(ac, OSEVM_TOK_CPAR, 1) */
+/*            || route(ac, OSEVM_TOK_i, 1) */
+/*            || route(ac, OSEVM_TOK_f, 1) */
+/*            || route(ac, OSEVM_TOK_s, 1) */
+/*            || route(ac, OSEVM_TOK_b, 1) */
+/*            || route(ac, OSEVM_TOK_AMP, 1)) */
+/*         { */
+/*             ose_moveStringToAddress(vm_c); */
+/*         } */
+/*     } */
+/* } */
 
 static void popAllControl(ose_bundle osevm)
 {
