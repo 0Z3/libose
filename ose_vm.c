@@ -62,6 +62,7 @@
 #define OSEVM_TOK_s             0x002f732f
 #define OSEVM_TOK_b             0x002f622f
 #define OSEVM_TOK_AMP           0x002f262f
+#define OSEVM_TOK_HASH          0x002f232f
 
 #define route_init(address, varname)            \
     struct { int32_t i2, i3, i4; } varname;     \
@@ -97,6 +98,7 @@
 #define OSEVM_TOK_s             0x2f732f00
 #define OSEVM_TOK_b             0x2f622f00
 #define OSEVM_TOK_AMP           0x2f262f00
+#define OSEVM_TOK_HASH          0x2f232f00
 
 #define route_init(address, varname)            \
     struct { int32_t i2, i3, i4; } varname;     \
@@ -151,6 +153,7 @@
 #define OSEVM_TOK_s         "/s/\0"
 #define OSEVM_TOK_b         "/b/\0"
 #define OSEVM_TOK_AMP       "/&/\0"
+#define OSEVM_TOK_HASH      "/#/\0"
 
 #endif
 
@@ -783,6 +786,10 @@ static void applyControl(ose_bundle osevm, char *address)
     {
         ose_pushString(vm_s, str + 2);
         OSEVM_TOBLOB(osevm);
+    }
+    else if(route_pfx(a, OSEVM_TOK_HASH, 1))
+    {
+        ;
     }
     else
     {
