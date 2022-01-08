@@ -3707,6 +3707,7 @@ void ose_eql(ose_bundle bundle)
     int32_t ln = sn - (ton - (on + 4));
     if(lnm1 != ln)
     {
+        ose_2drop(bundle);
         ose_pushInt32(bundle, 0);
         return;
     }
@@ -3735,6 +3736,7 @@ void ose_neq(ose_bundle bundle)
     int32_t ln = sn - (ton - (on + 4));
     if(lnm1 != ln)
     {
+        ose_2drop(bundle);
         ose_pushInt32(bundle, 0);
         return;
     }
