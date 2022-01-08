@@ -57,11 +57,18 @@ void ose_readFileLines(ose_bundle bundle, const char * const name)
     ose_pushBundle(bundle);
     while(fgets(buf, maxlen, fp)){
         int len = strlen(buf);
-        if(buf[len - 1] == '\n'){
-            buf[len - 1] = 0;
+        if(len == 1 && buf[len - 1] == '\n')
+        {
+            ;
         }
-        ose_pushString(bundle, buf);
-        ose_push(bundle);
+        else
+        {
+            if(buf[len - 1] == '\n'){
+                buf[len - 1] = 0;
+            }
+            ose_pushString(bundle, buf);
+            ose_push(bundle);
+        }
     }
     fclose(fp);
 }
