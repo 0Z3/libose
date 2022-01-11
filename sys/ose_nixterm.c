@@ -66,7 +66,9 @@ int ose_termRaw(void)
     raw = orig_termios;
     /* input modes: no break, no CR to NL, no parity check, no strip
        char, no start/stop output control. */
-    raw.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
+    /* raw.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON); */
+    /* added CR to NL back in */
+    raw.c_iflag &= ~(BRKINT | INPCK | ISTRIP | IXON);
     /* output modes - disable post processing */
     raw.c_oflag &= ~(OPOST);
     /* control modes - set 8 bit chars */
