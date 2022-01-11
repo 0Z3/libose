@@ -172,7 +172,7 @@ void ose_builtin_exec1(ose_bundle osevm)
     ose_copyBundle(vm_i, vm_d);
     ose_clear(vm_i);
 
-    /* move env to dump  */
+    /* copy env to dump  */
     ose_copyBundle(vm_e, vm_d);
     /* ose_replaceBundle(vm_s, vm_e); */
 
@@ -288,7 +288,8 @@ void ose_builtin_dotimes(ose_bundle osevm)
     {
         ose_pushInt32(vm_c, n - 1);
         ose_copyElem(vm_s, vm_c);
-        ose_pushString(vm_c, "/!/exec");
+        ose_pushString(vm_c, "/!/drop");
+        ose_pushString(vm_c, "/!/exec1");
         ose_pushString(vm_c, "/!/dotimes");
     }
     else
