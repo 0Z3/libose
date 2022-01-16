@@ -22,4 +22,4 @@
 */
 
 int ose_termRaw(void);
-int32_t ose_termRead(int32_t buflen, char *buf);
+int32_t ose_termRead(int fd, int32_t buflen, char *buf);

@@ -107,7 +107,7 @@ fatal:
 /*     return 0; */
 /* } */
 
-int32_t ose_termRead(int32_t buflen, char *buf)
+int32_t ose_termRead(int fd, int32_t buflen, char *buf)
 {
-    return read(STDIN_FILENO, buf, buflen);
+    return read(fd, buf, buflen);
 }
