@@ -893,7 +893,7 @@ void ose_roll(ose_bundle bundle)
     int32_t o = 0, oo = 0, ss = 0;
     pick(bundle, &o, &oo, &ss);
     memmove(b + oo, b + oo + ose_readInt32(bundle, oo) + 4, o - oo);
-    memset(b + o, 0, ss);
+    memset(b + o, 0, ss + 4);
     ose_incSize(bundle, 0);
 }
 
