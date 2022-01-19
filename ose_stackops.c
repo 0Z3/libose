@@ -1960,6 +1960,7 @@ void ose_blobToType(ose_bundle bundle)
 void ose_concatenateBlobs(ose_bundle bundle)
 {
     int32_t o = ose_getLastBundleElemOffset(bundle);
+    int32_t s = ose_readInt32(bundle, o);
     int32_t to, ntt, lto, po, lpo;
     ose_getNthPayloadItem(bundle, 2, o, &to, &ntt, &lto, &po, &lpo);
     ose_assert(ose_readByte(bundle, lto) == OSETT_BLOB);
@@ -1976,19 +1977,38 @@ void ose_concatenateBlobs(ose_bundle bundle)
         + ose_getBlobPaddingForNBytes(blob1_size);
 
     char *b = ose_getBundlePtr(bundle);
-    memmove(b + blob2_offset + 4 + blob2_size,
-            b + blob1_offset + 4,
-            blob1_psize);
+    char *b2 = b + blob2_offset;
+    char *b2_end = b2 + blob2_size + 4;
+    char *b1 = b + blob1_offset;
+    char *b1_end = b1 + blob1_size + 4;
 
-    int32_t newblob_size = blob2_size + blob1_size;
-    int32_t newblob_psize = newblob_size
-        + ose_getBlobPaddingForNBytes(newblob_size);
-    ose_writeInt32(bundle, blob2_offset, newblob_size);
-    ose_writeInt32(bundle,
-                   blob2_offset + 4 + newblob_psize,
-                   0);
-    ose_pop(bundle);
-    ose_drop(bundle);
+    int32_t new_blob2_size = blob2_size + blob1_size;
+    int32_t new_blob2_psize =
+        new_blob2_size + ose_getBlobPaddingForNBytes(new_blob2_size);
+    int32_t new_message_size =
+        s - (blob2_psize + blob1_psize + 8) + (new_blob2_psize + 4);
+    b[to + ntt - 1] = 0;
+    if(ntt % 4 == 0)
+    {
+        /* need to remove a type tag */
+        memmove(b2 - 4, b2, blob2_psize + blob1_psize + 8);
+        ose_writeInt32(bundle, blob1_offset + 4 + blob1_psize, 0);
+        b1 -= 4;
+        b1_end -= 4;
+        b2 -= 4;
+        b2_end -= 4;
+        new_message_size -= 4;
+    }
+    else
+    {
+        ;        
+    }
+    memmove(b2_end, b1 + 4, blob1_psize);
+    int32_t n = (b1 + 4) - b2_end;
+    memset(b1 + 4 + blob1_psize - n, 0, n);
+    ose_writeInt32(bundle, blob2_offset, new_blob2_size);
+    ose_writeInt32(bundle, o, new_message_size);
+    ose_addToSize(bundle, new_message_size - s);
 }
 
 void ose_concatenateStrings(ose_bundle bundle)
