@@ -83,8 +83,8 @@ ose_symtab.c: ose_symtab.gperf
 	gperf ose_symtab.gperf > ose_symtab.c
 
 ose_version.h:
-	echo "#define OSE_VERSION \""`git describe --always --dirty --tags`"\"\n" > ose_version.h
-	echo "#define OSE_DATE_COMPILED \""`date`"\"\n" >> ose_version.h
+	echo "#define OSE_VERSION \""`git describe --always --dirty --tags`"\"" > ose_version.h
+	echo "#define OSE_DATE_COMPILED \""`date`"\"" >> ose_version.h
 
 
 ############################################################
