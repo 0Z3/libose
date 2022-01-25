@@ -259,6 +259,8 @@ int32_t ose_getFirstOffsetForMatch(ose_constbundle bundle,
                                    const char * const addr);
 int32_t ose_getFirstOffsetForPMatch(ose_constbundle bundle,
                                     const char * const addr);
+int32_t ose_getFirstOffsetForFullPMatch(ose_constbundle bundle,
+                                        const char * const addr);
 
 /**
    @brief Calculate the size of a typed OSC datum.

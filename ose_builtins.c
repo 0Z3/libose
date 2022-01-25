@@ -744,7 +744,7 @@ void ose_builtin_lookupInEnv(ose_bundle osevm)
     const char * const address = ose_peekString(vm_s);
     int32_t mo = 0;
     {
-        mo = ose_getFirstOffsetForPMatch(vm_e, address);
+        mo = ose_getFirstOffsetForMatch(vm_e, address);
     }
     if(mo >= OSE_BUNDLE_HEADER_LEN)
     {
