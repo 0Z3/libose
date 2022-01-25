@@ -709,13 +709,24 @@ void ose_builtin_assignStackToEnv(ose_bundle osevm)
     ose_bundle vm_s = OSEVM_STACK(osevm);
     ose_bundle vm_e = OSEVM_ENV(osevm);
 
-    ose_pushString(vm_e, ose_peekString(vm_s));
-    while(ose_rollMatch_impl(vm_e))
+    const char * const str = ose_peekString(vm_s);
+    if(!strncmp(str, OSE_ADDRESS_ANONVAL, OSE_ADDRESS_ANONVAL_LEN)
+       && ose_readInt32(vm_e, -4) == OSE_BUNDLE_HEADER_LEN)
     {
-        ose_drop(vm_e);
-        ose_pushString(vm_e, ose_peekString(vm_s));
+        /* if there's nothing in the env, and this is the empty
+           string, rollMatch_impl will crash, because the string
+           will match itself */
     }
-    ose_drop(vm_e);
+    else
+    {
+        ose_pushString(vm_e, str);
+        while(ose_rollMatch_impl(vm_e))
+        {
+            ose_drop(vm_e);
+            ose_pushString(vm_e, ose_peekString(vm_s));
+        }
+        ose_drop(vm_e);
+    }
     while(1)
     {
         int32_t n = ose_getBundleElemCount(vm_s);
