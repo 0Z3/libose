@@ -767,7 +767,7 @@ int32_t ose_getFirstOffsetForPMatch(ose_constbundle bundle,
     {
         int po, ao;
         int r = ose_match_pattern(b + o + 4, addr, &po, &ao);
-        /* if(r & OSE_MATCH_ADDRESS_COMPLETE) */
+        if(r & OSE_MATCH_ADDRESS_COMPLETE)
         {
             return o;
         }
