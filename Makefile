@@ -1,8 +1,24 @@
-ifeq ($(OS),Windows_NT)
-	OSNAME:=$(OS)
+############################################################
+# Variables setable from the command line:
+#
+# CCOMPILER (default: clang)
+# DEBUG_SYMBOLS (default: DWARF)
+# EXTRA_CFLAGS (default: none)
+############################################################
+
+ifndef CCOMPILER
+CC=clang
 else
-	OSNAME:=$(shell uname -s)
+CC=$(CCOMPILER)
 endif
+
+ifeq ($(OS),Windows_NT)
+OSNAME:=$(OS)
+else
+OSNAME:=$(shell uname -s)
+endif
+
+
 
 CFILES=\
 ose.c\
@@ -24,16 +40,16 @@ DEFINES+=\
 	-DHAVE_OSE_ENDIAN_H \
 	-DHAVE_OSE_VERSION_H
 
-ifeq ($(OSNAME),Windows_NT)
-	CC=x86_64-w64-mingw32-gcc
+# ifeq ($(OSNAME),Windows_NT)
+# 	CC=x86_64-w64-mingw32-gcc
 
-	STATIC_TARGET:=libose.a
-	STATIC_TARGET_CMD=x86_64-w64-mingw32-gcc-ar cru $(STATIC_TARGET) $(OFILES)
+# 	STATIC_TARGET:=libose.a
+# 	STATIC_TARGET_CMD=x86_64-w64-mingw32-gcc-ar cru $(STATIC_TARGET) $(OFILES)
 
-	DYNAMIC_TARGET:=libose.dll
-	DYNAMIC_TARGET_CMD=$(CC) $(LDFLAGS) $(OFILES) -shared -o $(DYNAMIC_TARGET)
-else
-	CC=clang
+# 	DYNAMIC_TARGET:=libose.dll
+# 	DYNAMIC_TARGET_CMD=$(CC) $(LDFLAGS) $(OFILES) -shared -o $(DYNAMIC_TARGET)
+# else
+# 	CC=clang
 
 	STATIC_TARGET:=libose.a
 
@@ -45,18 +61,22 @@ else
 
 	DYNAMIC_TARGET:=libose.so
 	DYNAMIC_TARGET_CMD=$(CC) $(LDFLAGS) $(OFILES) -shared -o $(DYNAMIC_TARGET)
-endif
+# endif
 
 .PHONY: all release debug
 all: release
 
 INCLUDES=-I.
 
-release: CFLAGS+=$(DEFINES) -Wall -O3 -c
+ifneq ($(OS),Windows_NT)
+CFLAGS:=-fPIC
+endif
+
+release: CFLAGS+=$(DEFINES) -Wall -O3 -c $(EXTRA_CFLAGS)
 release: LDFLAGS+=
 release: $(STATIC_TARGET) $(DYNAMIC_TARGET)
 
-debug: CFLAGS+=$(DEFINES) -Wall -DOSE_CONF_DEBUG -O0 -glldb -gmodules -c
+debug: CFLAGS+=$(DEFINES) -Wall -DOSE_CONF_DEBUG -O0 -g$(DEBUG_SYMBOLS) -gmodules -c $(EXTRA_CFLAGS)
 debug: LDFLAGS+=
 debug: $(STATIC_TARGET) $(DYNAMIC_TARGET)
 
