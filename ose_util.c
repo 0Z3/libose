@@ -295,8 +295,12 @@ int32_t ose_getBundleElemElemCount(ose_constbundle bundle,
 ose_bool ose_bundleHasAtLeastNElems(ose_constbundle bundle,
                                     const int32_t n)
 {
-    ose_assert(n > 0);
+    /* ose_assert(n > 0); */
     ose_assert(ose_isBundle(bundle) == OSETT_TRUE);
+    if(n == 0)
+    {
+        return OSETT_TRUE;
+    }
     const int32_t s = ose_readInt32(bundle, -4);
     ose_assert(s >= OSE_BUNDLE_HEADER_LEN);
     int32_t o = OSE_BUNDLE_HEADER_LEN;
