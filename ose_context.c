@@ -29,9 +29,29 @@
 #include "ose_stackops.h"
 #include "ose_context.h"
 
+#ifdef OSE_DEBUG
+/* generate symbols in case we're in a debugger */
+const int32_t ose_context_bundle_size_offset =
+    OSE_CONTEXT_BUNDLE_SIZE_OFFSET;
+const int32_t ose_context_total_size_offset =
+    OSE_CONTEXT_TOTAL_SIZE_OFFSET;
+const int32_t ose_context_parent_bundle_offset_offset =
+    OSE_CONTEXT_PARENT_BUNDLE_OFFSET_OFFSET;
+const int32_t ose_context_status_offset =
+    OSE_CONTEXT_STATUS_OFFSET;
+const int32_t ose_context_bundle_offset =
+    OSE_CONTEXT_BUNDLE_OFFSET;
+const int32_t ose_context_message_overhead =
+    OSE_CONTEXT_MESSAGE_OVERHEAD;
+const int32_t ose_context_status_message_size =
+    OSE_CONTEXT_STATUS_MESSAGE_SIZE;
+const int32_t ose_context_max_overhead =
+    OSE_CONTEXT_MAX_OVERHEAD;
+#endif
+
 static int32_t writeContextMessage(ose_bundle bundle,
-                   int32_t size,
-                   const char * const address)
+                                   int32_t size,
+                                   const char * const address)
 {
     ose_assert(strlen(address) == 3);
     ose_assert(size >= OSE_CONTEXT_MESSAGE_OVERHEAD);
@@ -48,22 +68,33 @@ static int32_t writeContextMessage(ose_bundle bundle,
     strncpy(p, address, alen);
     p += palen;
     /*
-     * ,
-     * i : offset of data section relative to start of bundle
-     * i : offset of data section relative to start of message
-     * i : total number of bytes
-     * b : bundle (blob)
-     * b : free space (blob)
-     */
-    strcpy(p, ",iiibb");
+      ,
+      i : unused
+      i : status
+      i : offset of data section relative to start of bundle
+      i : total number of bytes
+      b : bundle (blob)
+      b : free space (blob)
+    */
+    strcpy(p, ",iiiibb");
     p += 8;
-    *((int32_t *)p) = ose_htonl(o + 4 + palen + 8 + 4 + 4 + 4 + 4);
-    p += 4; /* int */
-    *((int32_t *)p) = ose_htonl(4 + palen + 8 + 4 + 4 + 4);
-    p += 4; /* int */
+
+    /* unused */
+    *((int32_t *)p) = 0;
+    p += 4; 
+
+    /* status */
+    *((int32_t *)p) = 0;
+    p += 4; 
+
+    /* offset of data section relative to start of bundle */
+    *((int32_t *)p) = ose_htonl(o + OSE_CONTEXT_BUNDLE_OFFSET);
+    p += 4; 
+
+    /* total number of bytes */
     *((int32_t *)p) = ose_htonl(freespace
-                    + OSE_BUNDLE_HEADER_LEN);
-    p += 4; /* int */
+                                + OSE_BUNDLE_HEADER_LEN);
+    p += 4; 
 
     /* bundle */
     *((int32_t *)p) = ose_htonl(OSE_BUNDLE_HEADER_LEN);
@@ -77,8 +108,8 @@ static int32_t writeContextMessage(ose_bundle bundle,
 }
 
 int32_t ose_init(ose_bundle bundle,
-         int32_t size,
-         const char * const address)
+                 int32_t size,
+                 const char * const address)
 {
     ose_assert(size % 4 == 0);
     int32_t fs = writeContextMessage(bundle, size, address);
@@ -87,8 +118,8 @@ int32_t ose_init(ose_bundle bundle,
 }
 
 int32_t ose_pushContextMessage(ose_bundle bundle,
-                   int32_t size,
-                   const char * const address)
+                               int32_t size,
+                               const char * const address)
 {
     ose_assert(size % 4 == 0);
     int32_t bs1 = ose_readInt32(bundle, -4);
@@ -104,7 +135,8 @@ int32_t ose_pushContextMessage(ose_bundle bundle,
 
 int32_t ose_spaceAvailable(ose_constbundle bundle)
 {
-    return ose_readInt32(bundle, -8) - ose_readInt32(bundle, -4);
+    return ose_readInt32(bundle, OSE_CONTEXT_TOTAL_SIZE_OFFSET)
+        - ose_readInt32(bundle, -4);
 }
 
 ose_bundle ose_enter(ose_bundle bundle, const char * const address)
@@ -120,7 +152,7 @@ ose_bundle ose_enter(ose_bundle bundle, const char * const address)
            && b[4 + o + 2] == address[2]
            && b[4 + o + 3] == address[3])
         {
-            int32_t oo = o + 4 + 4 + 8 + 16;
+            int32_t oo = o + OSE_CONTEXT_BUNDLE_OFFSET;
             ose_bundle bb = ose_makeBundle(b + oo);
             return bb;
         }
@@ -132,7 +164,8 @@ ose_bundle ose_enter(ose_bundle bundle, const char * const address)
 
 ose_bundle ose_exit(ose_bundle bundle)
 {
-    int32_t o = ose_readInt32(bundle, -16);
+    int32_t o = ose_readInt32(bundle,
+                              OSE_CONTEXT_PARENT_BUNDLE_OFFSET_OFFSET);
     char *b = ose_getBundlePtr(bundle);
     b -= o;
     ose_bundle ret = ose_makeBundle(b);
@@ -147,7 +180,8 @@ void ose_addToSize(ose_bundle bundle, int32_t amt)
     ose_assert(os >= OSE_BUNDLE_HEADER_LEN);
     int32_t ns1 = os + amt;
     ose_assert(ns1 >= OSE_BUNDLE_HEADER_LEN);
-    int32_t ns2 = ose_readInt32(bundle, -8) - ns1;
+    int32_t ns2 = ose_readInt32(bundle,
+                                OSE_CONTEXT_TOTAL_SIZE_OFFSET) - ns1;
     ose_assert(ns2 >= 0);
     if(amt < 0)
     {
@@ -167,7 +201,8 @@ void ose_incSize(ose_bundle bundle, int32_t amt)
     ose_assert(os >= OSE_BUNDLE_HEADER_LEN);
     int32_t ns1 = os + amt;
     ose_assert(ns1 >= OSE_BUNDLE_HEADER_LEN);
-    int32_t ns2 = ose_readInt32(bundle, -8) - ns1;
+    int32_t ns2 = ose_readInt32(bundle,
+                                OSE_CONTEXT_TOTAL_SIZE_OFFSET) - ns1;
     ose_assert(ns2 >= 0);
     ose_writeInt32(bundle, -4, ns1);
     ose_writeInt32(bundle, ns1, ns2);
@@ -183,7 +218,8 @@ void ose_decSize(ose_bundle bundle, int32_t amt)
     ose_assert(os >= OSE_BUNDLE_HEADER_LEN);
     int32_t ns1 = os - amt;
     ose_assert(ns1 >= OSE_BUNDLE_HEADER_LEN);
-    int32_t ns2 = ose_readInt32(bundle, -8) - ns1;
+    int32_t ns2 = ose_readInt32(bundle,
+                                OSE_CONTEXT_TOTAL_SIZE_OFFSET) - ns1;
     ose_assert(ns2 >= 0);
     ose_writeInt32(bundle, os, 0);
     ose_writeInt32(bundle, -4, ns1);

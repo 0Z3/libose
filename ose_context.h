@@ -96,19 +96,26 @@ extern "C" {
 #define OSE_CONTEXT_ALIGNMENT 4
 
 
+#define OSE_CONTEXT_BUNDLE_SIZE_OFFSET -4
+#define OSE_CONTEXT_TOTAL_SIZE_OFFSET -8
+#define OSE_CONTEXT_PARENT_BUNDLE_OFFSET_OFFSET -12
+#define OSE_CONTEXT_STATUS_OFFSET -16
+
+
 
 
 /**
    @brief The number of bytes between the beginning of a context
    message and the bundle (blob).
 */
-#define OSE_CONTEXT_BUNDLE_OFFSET               \
-    (4          /* size */                      \
-     + 4            /* padded address len */    \
-     + 8            /* padded typetag str */    \
-     + 4            /* int */                   \
-     + 4            /* int */                   \
-     + 4            /* int */                   \
+#define OSE_CONTEXT_BUNDLE_OFFSET                   \
+    (4          /* size */                          \
+     + 4            /* padded address len */        \
+     + 8            /* padded typetag str */        \
+     + 4            /* int - unused */              \
+     + 4            /* int - status */              \
+     + 4            /* int - offset to bundle */    \
+     + 4            /* int - total size */          \
      + 4)           /* blob size */
 
 
@@ -143,6 +150,7 @@ extern "C" {
      + OSE_CONTEXT_MESSAGE_OVERHEAD             \
      + OSE_CONTEXT_STATUS_MESSAGE_SIZE          \
      + OSE_CONTEXT_MESSAGE_OVERHEAD)
+
 
 
 
