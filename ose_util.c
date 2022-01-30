@@ -291,14 +291,14 @@ int32_t ose_getBundleElemElemCount(ose_constbundle bundle,
     }
 }
 
-ose_bool ose_bundleHasAtLeastNElems(ose_constbundle bundle,
+bool ose_bundleHasAtLeastNElems(ose_constbundle bundle,
                                     const int32_t n)
 {
     /* ose_assert(n > 0); */
     ose_assert(ose_isBundle(bundle));
     if(n == 0)
     {
-        return OSETT_TRUE;
+        return true;
     }
     const int32_t s = ose_readInt32(bundle, -4);
     ose_assert(s >= OSE_BUNDLE_HEADER_LEN);
@@ -311,7 +311,7 @@ ose_bool ose_bundleHasAtLeastNElems(ose_constbundle bundle,
         o += ss + 4;
         i++;
     }
-    return i == n ? OSETT_TRUE : OSETT_FALSE;
+    return i == n ? true : false;
 }
 
 char ose_getBundleElemType(ose_constbundle bundle,

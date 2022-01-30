@@ -232,7 +232,7 @@ void ose_copyElemAtOffset(int32_t srcoffset,
               ose_constbundle src,
               ose_bundle dest)
 {
-    ose_assert(ose_bundleHasAtLeastNElems(src, 1) == OSETT_TRUE);
+    ose_assert(ose_bundleHasAtLeastNElems(src, 1));
     const char * const srcp = ose_getBundlePtr(src);
     /*const int32_t src_offset = ose_getLastBundleElemOffset(src); */
     const int32_t src_elem_size = ose_readInt32(src, srcoffset) + 4;

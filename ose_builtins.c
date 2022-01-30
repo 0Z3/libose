@@ -387,7 +387,7 @@ void ose_builtin_apply(ose_bundle osevm)
     ose_bundle vm_c = OSEVM_CONTROL(osevm);
     ose_bundle vm_d = OSEVM_DUMP(osevm);
 
-    ose_rassert(ose_bundleHasAtLeastNElems(vm_s, 1) == OSETT_TRUE, 1);
+    ose_rassert(ose_bundleHasAtLeastNElems(vm_s, 1), 1);
     while(1)
     {
         char elemtype = ose_peekType(vm_s);
@@ -540,7 +540,7 @@ void ose_builtin_map(ose_bundle osevm)
 {
     ose_bundle vm_s = OSEVM_STACK(osevm);
     ose_bundle vm_c = OSEVM_CONTROL(osevm);
-    ose_rassert(ose_bundleHasAtLeastNElems(vm_s, 2) == OSETT_TRUE, 1);
+    ose_rassert(ose_bundleHasAtLeastNElems(vm_s, 2), 1);
     ose_swap(vm_s);
     char t = ose_peekType(vm_s);
     if(t == OSETT_BUNDLE)

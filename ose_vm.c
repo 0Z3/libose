@@ -894,7 +894,7 @@ void osevm_run(ose_bundle osevm)
                 applyControl(osevm, ose_peekAddress(vm_c));
                 /* check status and drop into */
                 /* debugger if necessary */
-                if(ose_bundleHasAtLeastNElems(vm_c, 1) == OSETT_TRUE)
+                if(ose_bundleHasAtLeastNElems(vm_c, 1))
                 {
                     ose_drop(vm_c);
                 }

@@ -111,8 +111,8 @@ int32_t ose_getBundleElemCount(ose_constbundle bundle);
 */
 int32_t ose_getBundleElemElemCount(ose_constbundle bundle,
                                    int32_t offset);
-ose_bool ose_bundleHasAtLeastNElems(ose_constbundle bundle,
-                                    int32_t n);
+bool ose_bundleHasAtLeastNElems(ose_constbundle bundle,
+                                int32_t n);
 char ose_getBundleElemType(ose_constbundle bundle, int32_t offset);
 
 #ifdef OSE_DEBUG
