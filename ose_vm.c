@@ -818,33 +818,33 @@ char osevm_step(ose_bundle osevm)
     ose_bundle vm_i = OSEVM_INPUT(osevm);
     ose_bundle vm_c = OSEVM_CONTROL(osevm);
     ose_bundle vm_d = OSEVM_DUMP(osevm);
-    if(ose_bundleIsEmpty(vm_c) == OSETT_FALSE)
+    if(!ose_bundleIsEmpty(vm_c))
     {
         applyControl(osevm, ose_peekAddress(vm_c));
-        if(ose_bundleIsEmpty(vm_c) == OSETT_TRUE)
+        if(ose_bundleIsEmpty(vm_c))
         {
             OSEVM_POSTCONTROL(osevm);
         }
     }
-    else if(ose_bundleIsEmpty(vm_i) == OSETT_FALSE)
+    else if(!ose_bundleIsEmpty(vm_i))
     {
         OSEVM_POPINPUTTOCONTROL(osevm);
-        if(ose_bundleIsEmpty(vm_c) == OSETT_FALSE)
+        if(!ose_bundleIsEmpty(vm_c))
         {
             popAllControl(osevm);
         }
     }
-    else if(ose_bundleIsEmpty(vm_d) == OSETT_FALSE
+    else if(!ose_bundleIsEmpty(vm_d)
             && !(OSEVM_GET_FLAGS(osevm) & OSEVM_FLAG_COMPILE))
     {
         ose_builtin_return(osevm);
     }
-    if(ose_bundleIsEmpty(vm_i) == OSETT_FALSE
-       || ose_bundleIsEmpty(vm_c) == OSETT_FALSE)
+    if(!ose_bundleIsEmpty(vm_i)
+       || !ose_bundleIsEmpty(vm_c))
     {
         return OSETT_TRUE;
     }
-    else if(ose_bundleIsEmpty(vm_d) == OSETT_FALSE)
+    else if(!ose_bundleIsEmpty(vm_d))
     {
         if(OSEVM_GET_FLAGS(osevm) & OSEVM_FLAG_COMPILE)
         {
@@ -872,14 +872,14 @@ void osevm_run(ose_bundle osevm)
     {
         while(1)
         {
-            if(ose_bundleIsEmpty(vm_c) == OSETT_TRUE)
+            if(ose_bundleIsEmpty(vm_c))
             {
-                if(ose_bundleIsEmpty(vm_i) == OSETT_TRUE)
+                if(ose_bundleIsEmpty(vm_i))
                 {
                     break;
                 }
                 OSEVM_POPINPUTTOCONTROL(osevm);
-                if(ose_bundleIsEmpty(vm_c) == OSETT_TRUE)
+                if(ose_bundleIsEmpty(vm_c))
                 {
                     continue;
                 }
@@ -887,7 +887,7 @@ void osevm_run(ose_bundle osevm)
             }
             while(1)
             {
-                if(ose_bundleIsEmpty(vm_c) == OSETT_TRUE)
+                if(ose_bundleIsEmpty(vm_c))
                 {
                     break;
                 }
@@ -901,7 +901,7 @@ void osevm_run(ose_bundle osevm)
             }
             OSEVM_POSTCONTROL(osevm);
         }
-        if(ose_bundleIsEmpty(vm_d) == OSETT_FALSE
+        if(!ose_bundleIsEmpty(vm_d)
            && ose_getBundleElemCount(vm_d) > n
            && !(OSEVM_GET_FLAGS(osevm) & OSEVM_FLAG_COMPILE))
         {

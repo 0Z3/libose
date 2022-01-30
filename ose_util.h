@@ -90,7 +90,7 @@ bool ose_isBundle(ose_constbundle bundle);
    function's assertions will fail, since bundle does not point to a
    bundle.
 */
-ose_bool ose_bundleIsEmpty(ose_constbundle bundle);
+bool ose_bundleIsEmpty(ose_constbundle bundle);
 int32_t ose_getBundleElemCount(ose_constbundle bundle);
 
 

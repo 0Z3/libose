@@ -239,18 +239,18 @@ bool ose_isBundle(ose_constbundle bundle)
     return isBundle(ose_getBundlePtr(bundle));
 }
 
-ose_bool ose_bundleIsEmpty(ose_constbundle bundle)
+bool ose_bundleIsEmpty(ose_constbundle bundle)
 {
     ose_assert(ose_isBundle(bundle));
     const int32_t s = ose_readInt32(bundle, -4);
     ose_assert(s >= 0);
     if(s > OSE_BUNDLE_HEADER_LEN)
     {
-        return OSETT_FALSE;
+        return false;
     }
     else
     {
-        return OSETT_TRUE;
+        return true;
     }
 }
 

@@ -401,14 +401,14 @@ void ose_pushMessage(ose_bundle bundle,
 
 char *ose_peekAddress(const ose_bundle bundle)
 {
-    assert(ose_bundleIsEmpty(bundle) == OSETT_FALSE);
+    assert(!ose_bundleIsEmpty(bundle));
     const int32_t o = ose_getLastBundleElemOffset(bundle);
     return ose_getBundlePtr(bundle) + o + 4;
 }
 
 char ose_peekMessageArgType(const ose_bundle bundle)
 {
-    assert(ose_bundleIsEmpty(bundle) == OSETT_FALSE);
+    assert(!ose_bundleIsEmpty(bundle));
     const int32_t o = ose_getLastBundleElemOffset(bundle);
     const int32_t s = ose_readInt32(bundle, o);
     ose_assert(s >= 0);
@@ -431,14 +431,14 @@ char ose_peekMessageArgType(const ose_bundle bundle)
 
 char ose_peekType(const ose_bundle bundle)
 {
-    assert(ose_bundleIsEmpty(bundle) == OSETT_FALSE);
+    assert(!ose_bundleIsEmpty(bundle));
     const int32_t o = ose_getLastBundleElemOffset(bundle);
     return ose_getBundleElemType(bundle, o);
 }
 
 static char *peek(const ose_bundle bundle, char typetag)
 {
-    assert(ose_bundleIsEmpty(bundle) == OSETT_FALSE);
+    assert(!ose_bundleIsEmpty(bundle));
     int32_t o = ose_getLastBundleElemOffset(bundle);
     int32_t to, ntt, lto, po, lpo;
     ose_getNthPayloadItem(bundle, 1, o, &to, &ntt, &lto, &po, &lpo);
