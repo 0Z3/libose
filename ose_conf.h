@@ -194,15 +194,6 @@ extern "C" {
 */
 /* #define OSE_CONF_DEBUG */
 
-/* When not in debug mode, recoverable assertions are turned off.
-   In debug mode, the default behavior is for recoverable assertions
-   to behave like normal assertions and call abort(), however, by
-   defining OSE_CONF_RASSERT_THROW, they can be made to longjmp back
-   to a point before the assertion failed.
-*/
-/* #define OSE_CONF_RASSERT_FAIL */
-/* #define OSE_CONF_RASSERT_THROW */
-
 /**
    The address of anonymous values. When a value is pushed onto the
    stack with a function like #ose_pushInt32(), it goes on as a

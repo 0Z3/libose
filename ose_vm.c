@@ -686,29 +686,6 @@ static void applyControl(ose_bundle osevm, char *address)
     ose_bundle vm_s = OSEVM_STACK(osevm);
     ose_bundle vm_c = OSEVM_CONTROL(osevm);
 
-    /* int32_t flags = OSEVM_GET_FLAGS(osevm); */
-    /* if(flags & OSEVM_FLAG_COMPILE) */
-    /* { */
-    /*     if(route_mthd(a, OSEVM_TOK_CPAR, 1)) */
-    /*     { */
-    /*         ose_try */
-    /*         { */
-    /*             OSEVM_ENDDEFUN(osevm, address); */
-    /*         } */
-    /*         ose_catch(1) */
-    /*         { */
-    /*             ; */
-    /*             /\* debug *\/ */
-    /*         } */
-    /*         ose_finally */
-    /*         { */
-    /*             ; */
-    /*         } */
-    /*         ose_end_try; */
-    /*         return; */
-    /*     } */
-    /* } */
-
     if(ose_peekType(vm_c) == OSETT_MESSAGE)
     {
         char t = ose_peekMessageArgType(vm_c);
@@ -798,38 +775,6 @@ static void applyControl(ose_bundle osevm, char *address)
     }
 }
 
-/* static void convertKnownStringAddressToAddress(ose_bundle vm_c) */
-/* { */
-/*     if(ose_isStringType(ose_peekMessageArgType(vm_c)) */
-/*        == OSETT_TRUE) */
-/*     { */
-/*         char *address = ose_peekString(vm_c); */
-/*         route_init(address, ac); */
-/*         if(route(ac, OSEVM_TOK_AT, 1) */
-/*            || route_pfx(ac, OSEVM_TOK_QUOTE, 1) */
-/*            || route(ac, OSEVM_TOK_BANG, 1) */
-/*            || route(ac, OSEVM_TOK_DOLLAR, 1) */
-/*            || route(ac, OSEVM_TOK_GT, 1) */
-/*            || route(ac, OSEVM_TOK_LTLT, 2) */
-/*            || route(ac, OSEVM_TOK_LT, 1) */
-/*            || route(ac, OSEVM_TOK_DASH, 1) */
-/*            || route(ac, OSEVM_TOK_DOT, 1) */
-/*            || route(ac, OSEVM_TOK_COLON, 1) */
-/*            || route(ac, OSEVM_TOK_SCOLON, 1) */
-/*            || route(ac, OSEVM_TOK_PIPE, 1) */
-/*            || route(ac, OSEVM_TOK_OPAR, 1) */
-/*            || route(ac, OSEVM_TOK_CPAR, 1) */
-/*            || route(ac, OSEVM_TOK_i, 1) */
-/*            || route(ac, OSEVM_TOK_f, 1) */
-/*            || route(ac, OSEVM_TOK_s, 1) */
-/*            || route(ac, OSEVM_TOK_b, 1) */
-/*            || route(ac, OSEVM_TOK_AMP, 1)) */
-/*         { */
-/*             ose_moveStringToAddress(vm_c); */
-/*         } */
-/*     } */
-/* } */
-
 static void popAllControl(ose_bundle osevm)
 {
     ose_bundle vm_c = OSEVM_CONTROL(osevm);
@@ -875,22 +820,7 @@ char osevm_step(ose_bundle osevm)
     ose_bundle vm_d = OSEVM_DUMP(osevm);
     if(ose_bundleIsEmpty(vm_c) == OSETT_FALSE)
     {
-        ose_try
-        {
-            applyControl(osevm, ose_peekAddress(vm_c));
-        }
-        ose_catch(1)
-        {
-            /* debug */
-        }
-        ose_finally
-        {
-            if(ose_bundleHasAtLeastNElems(vm_c, 1) == OSETT_TRUE)
-            {
-                ose_drop(vm_c);
-            }   
-        }
-        ose_end_try;
+        applyControl(osevm, ose_peekAddress(vm_c));
         if(ose_bundleIsEmpty(vm_c) == OSETT_TRUE)
         {
             OSEVM_POSTCONTROL(osevm);

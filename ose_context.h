@@ -101,6 +101,12 @@ extern "C" {
 #define OSE_CONTEXT_PARENT_BUNDLE_OFFSET_OFFSET -12
 #define OSE_CONTEXT_STATUS_OFFSET -16
 
+#define ose_context_get_status(b)               \
+    ose_readInt32(b, OSE_CONTEXT_STATUS_OFFSET)
+
+#define ose_context_set_status(b, s)                \
+    ose_writeInt32(b, OSE_CONTEXT_STATUS_OFFSET, s)
+
 
 
 

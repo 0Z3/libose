@@ -60,23 +60,6 @@ extern "C" {
 #endif
 #endif
 
-#if !defined(OSE_CONF_RASSERT_FAIL)             \
-    && !defined(OSE_CONF_RASSERT_THROW)
-#define OSE_RASSERT_FAIL
-#elif defined(OSE_CONF_RASSERT_FAIL)
-#ifdef OSE_CONF_RASSERT_THROW
-#error "Only one OSE_CONF_RASSERT definition may be provided. "     \
-    "Found both OSE_CONF_RASSERT_FAIL and OSE_CONF_RASSERT_THROW."
-#endif
-#define OSE_RASSERT_FAIL
-#elif defined(OSE_CONF_RASSERT_THROW)
-#ifdef OSE_CONF_RASSERT_FAIL
-#error "Only one OSE_CONF_RASSERT definition may be provided. "     \
-    "Found both OSE_CONF_RASSERT_FAIL and OSE_CONF_RASSERT_THROW."
-#endif
-#define OSE_RASSERT_THROW
-#endif
-
 /**
    htonl / ntohl
 */
@@ -246,6 +229,16 @@ struct ose_timetag
 #define OSETT_BUNDLE '|'
 #define OSETT_MESSAGE '-'
 #define OSETT_ALIGNEDPTR 'p'
+
+#ifndef __cplusplus
+#ifndef __bool_true_false_are_defined
+typedef enum
+{
+    false = 0,
+    true
+} bool;
+#endif
+#endif
 
 /**
    Constants
