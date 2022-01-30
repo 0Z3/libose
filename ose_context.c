@@ -174,7 +174,7 @@ ose_bundle ose_exit(ose_bundle bundle)
 
 void ose_addToSize(ose_bundle bundle, int32_t amt)
 {
-    ose_assert(ose_isBundle(bundle) == OSETT_TRUE);
+    ose_assert(ose_isBundle(bundle));
     /*ose_assert(amt >= 0); */
     int32_t os = ose_readInt32(bundle, -4);
     ose_assert(os >= OSE_BUNDLE_HEADER_LEN);
@@ -195,7 +195,7 @@ void ose_addToSize(ose_bundle bundle, int32_t amt)
 
 void ose_incSize(ose_bundle bundle, int32_t amt)
 {
-    ose_assert(ose_isBundle(bundle) == OSETT_TRUE);
+    ose_assert(ose_isBundle(bundle));
     /*ose_assert(amt >= 0); */
     int32_t os = ose_readInt32(bundle, -4);
     ose_assert(os >= OSE_BUNDLE_HEADER_LEN);
@@ -212,7 +212,7 @@ void ose_incSize(ose_bundle bundle, int32_t amt)
 
 void ose_decSize(ose_bundle bundle, int32_t amt)
 {
-    ose_assert(ose_isBundle(bundle) == OSETT_TRUE);
+    ose_assert(ose_isBundle(bundle));
     /*ose_assert(amt >= 0); */
     int32_t os = ose_readInt32(bundle, -4);
     ose_assert(os >= OSE_BUNDLE_HEADER_LEN);
@@ -245,8 +245,8 @@ void ose_copyElemAtOffset(int32_t srcoffset,
 
 void ose_copyBundle(ose_constbundle src, ose_bundle dest)
 {
-    ose_assert(ose_isBundle(src) == OSETT_TRUE);
-    ose_assert(ose_isBundle(dest) == OSETT_TRUE);
+    ose_assert(ose_isBundle(src));
+    ose_assert(ose_isBundle(dest));
     int32_t ds = ose_readInt32(dest, -4);
     ose_assert(ds >= OSE_BUNDLE_HEADER_LEN);
     int32_t ss = ose_readInt32(src, -4);
@@ -297,8 +297,8 @@ int32_t ose_routeElemAtOffset(int32_t srcoffset,
 
 void ose_appendBundle(ose_bundle src, ose_bundle dest)
 {
-    ose_assert(ose_isBundle(src) == OSETT_TRUE);
-    ose_assert(ose_isBundle(dest) == OSETT_TRUE);
+    ose_assert(ose_isBundle(src));
+    ose_assert(ose_isBundle(dest));
     const char * const sp = ose_getBundlePtr(src);
     char *dp = ose_getBundlePtr(dest);
     const int32_t so = ose_getLastBundleElemOffset(src);

@@ -72,7 +72,7 @@ bool ose_isBoolType(char typetag);
    points to are \#bundle, #OSETT_FALSE otherwise (including the
    case where bundle is a NULL pointer).
 */
-ose_bool ose_isBundle(ose_constbundle bundle);
+bool ose_isBundle(ose_constbundle bundle);
 
 
 

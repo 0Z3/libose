@@ -240,7 +240,7 @@ static int32_t _ose_pprintBundle(ose_bundle bundle,
 				 int32_t buflen,
 				 int32_t indent)
 {
-	ose_assert(ose_isBundle(bundle) == OSETT_TRUE);
+	ose_assert(ose_isBundle(bundle));
 	int32_t nn = 0;
 	int32_t ss = ose_readInt32(bundle, offset - 4);
 	char *bufp = buf;

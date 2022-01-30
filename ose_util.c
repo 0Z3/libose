@@ -215,33 +215,33 @@ bool ose_isBoolType(const char typetag)
     }
 }
 
-static ose_bool isBundle(const char * const b)
+static bool isBundle(const char * const b)
 {
     if(b)
     {
         if(b[0] && !strncmp(b, OSE_BUNDLE_ID, OSE_BUNDLE_ID_LEN))
         {
-            return OSETT_TRUE;
+            return true;
         }
         else
         {
-            return OSETT_FALSE;
+            return false;
         }
     }
     else
     {
-        return OSETT_FALSE;
+        return false;
     }
 }
 
-ose_bool ose_isBundle(ose_constbundle bundle)
+bool ose_isBundle(ose_constbundle bundle)
 {
     return isBundle(ose_getBundlePtr(bundle));
 }
 
 ose_bool ose_bundleIsEmpty(ose_constbundle bundle)
 {
-    ose_assert(ose_isBundle(bundle) == OSETT_TRUE);
+    ose_assert(ose_isBundle(bundle));
     const int32_t s = ose_readInt32(bundle, -4);
     ose_assert(s >= 0);
     if(s > OSE_BUNDLE_HEADER_LEN)
@@ -256,7 +256,7 @@ ose_bool ose_bundleIsEmpty(ose_constbundle bundle)
 
 int32_t ose_getBundleElemCount(ose_constbundle bundle)
 {
-    ose_assert(ose_isBundle(bundle) == OSETT_TRUE);
+    ose_assert(ose_isBundle(bundle));
     const int32_t s = ose_readInt32(bundle, -4);
     ose_assert(s >= 0);
     int32_t o = OSE_BUNDLE_HEADER_LEN;
@@ -274,7 +274,7 @@ int32_t ose_getBundleElemCount(ose_constbundle bundle)
 int32_t ose_getBundleElemElemCount(ose_constbundle bundle,
                                    const int32_t offset)
 {
-    ose_assert(ose_isBundle(bundle) == OSETT_TRUE);
+    ose_assert(ose_isBundle(bundle));
     const char * const b = ose_getBundlePtr(bundle);
     if(ose_getBundleElemType(bundle, offset) == OSETT_BUNDLE)
     {
@@ -295,7 +295,7 @@ ose_bool ose_bundleHasAtLeastNElems(ose_constbundle bundle,
                                     const int32_t n)
 {
     /* ose_assert(n > 0); */
-    ose_assert(ose_isBundle(bundle) == OSETT_TRUE);
+    ose_assert(ose_isBundle(bundle));
     if(n == 0)
     {
         return OSETT_TRUE;
@@ -322,7 +322,7 @@ char ose_getBundleElemType(ose_constbundle bundle,
     const int32_t s = ose_readInt32(bundle, -4);(void)s;
     ose_assert(s >= OSE_BUNDLE_HEADER_LEN);
     ose_assert(offset < s);
-    if(isBundle(b + offset + 4) == OSETT_TRUE)
+    if(isBundle(b + offset + 4))
     {
         return OSETT_BUNDLE;
     }
@@ -539,7 +539,7 @@ int32_t ose_writeDouble(ose_bundle bundle,
                         const int32_t offset,
                         const double f)
 {
-    ose_assert(ose_isBundle(bundle) == OSETT_TRUE);
+    ose_assert(ose_isBundle(bundle));
     const char * const b = ose_getBundlePtr(bundle) + offset;
     const int64_t i = *((int64_t *)&f);
     *((int64_t *)b) = ose_htonll(i);
@@ -576,7 +576,7 @@ int32_t ose_writeInt64(ose_bundle bundle,
                        const int32_t offset,
                        const int64_t i)
 {
-    ose_assert(ose_isBundle(bundle) == OSETT_TRUE);
+    ose_assert(ose_isBundle(bundle));
     const char * const b = ose_getBundlePtr(bundle) + offset;
     *((int64_t *)b) = ose_htonll(i);
     return 8;
@@ -595,7 +595,7 @@ int32_t ose_writeUInt64(ose_bundle bundle,
                         const int32_t offset,
                         const uint64_t i)
 {
-    ose_assert(ose_isBundle(bundle) == OSETT_TRUE);
+    ose_assert(ose_isBundle(bundle));
     const char * const b = ose_getBundlePtr(bundle) + offset;
     *((uint64_t *)b) = ose_htonll(i);
     return 8;
@@ -620,7 +620,7 @@ int32_t ose_writeTimetag(ose_bundle bundle,
                          const uint32_t sec,
                          const uint32_t fsec)
 {
-    ose_assert(ose_isBundle(bundle) == OSETT_TRUE);
+    ose_assert(ose_isBundle(bundle));
     const char * const b = ose_getBundlePtr(bundle) + offset;
     *((uint32_t *)b) = ose_htonl(sec);
     *((uint32_t *)(b + 4)) = ose_htonl(fsec);
@@ -677,7 +677,7 @@ void ose_alignPtr(ose_bundle bundle, const int32_t offset)
 
 int32_t ose_getLastBundleElemOffset(ose_constbundle bundle)
 {
-    ose_assert(ose_isBundle(bundle) == OSETT_TRUE);
+    ose_assert(ose_isBundle(bundle));
     const int32_t bs = ose_readInt32(bundle, -4);
     if(bs == OSE_BUNDLE_HEADER_LEN)
     {
@@ -701,7 +701,7 @@ int32_t ose_getLastBundleElemOffset(ose_constbundle bundle)
 int32_t ose_getBundleElemAddressOffset(ose_constbundle bundle,
                                        const int32_t elemoffset)
 {
-    ose_assert(ose_isBundle(bundle) == OSETT_TRUE);
+    ose_assert(ose_isBundle(bundle));
     ose_assert(elemoffset >= OSE_BUNDLE_HEADER_LEN);
     const int32_t bs = ose_readInt32(bundle, -4);(void)bs;
     ose_assert(elemoffset < bs);
@@ -871,7 +871,7 @@ int32_t ose_getPayloadItemSize(ose_constbundle bundle,
                                const char typetag,
                                const int32_t payload_offset)
 {
-    ose_assert(ose_isBundle(bundle) == OSETT_TRUE);
+    ose_assert(ose_isBundle(bundle));
     ose_assert(payload_offset >= OSE_BUNDLE_HEADER_LEN);
     const int32_t bs = ose_readInt32(bundle, -4);(void)bs;
     ose_assert(payload_offset < bs);
@@ -953,7 +953,7 @@ int32_t ose_getPayloadItemLength(ose_constbundle bundle,
                                  const char typetag,
                                  const int32_t payload_offset)
 {
-    ose_assert(ose_isBundle(bundle) == OSETT_TRUE);
+    ose_assert(ose_isBundle(bundle));
     ose_assert(payload_offset >= OSE_BUNDLE_HEADER_LEN);
     const int32_t bs = ose_readInt32(bundle, -4);(void)bs;
     ose_assert(payload_offset < bs);
@@ -976,7 +976,7 @@ void ose_getNthPayloadItem(ose_constbundle bundle,
                            int32_t *_po,
                            int32_t *_lpo)
 {
-    ose_assert(ose_isBundle(bundle) == OSETT_TRUE);
+    ose_assert(ose_isBundle(bundle));
     ose_assert(n > 0);
     ose_assert(o >= OSE_BUNDLE_HEADER_LEN);
     const int32_t bundlesize = ose_readInt32(bundle, -4);
@@ -1014,7 +1014,7 @@ int32_t ose_vwriteMessage(ose_bundle bundle,
                           const int32_t n,
                           va_list ap)
 {
-    ose_assert(ose_isBundle(bundle) == OSETT_TRUE);
+    ose_assert(ose_isBundle(bundle));
     ose_assert(address);
     ose_assert(addresslen >= 0);
     ose_assert(n >= 0);

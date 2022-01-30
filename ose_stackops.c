@@ -93,7 +93,7 @@ void be4(ose_bundle bundle,
 
 static void pushInt32(ose_bundle bundle, int32_t i, char typetag)
 {
-    ose_assert(ose_isBundle(bundle) == OSETT_TRUE);
+    ose_assert(ose_isBundle(bundle));
     ose_assert(typetag != OSETT_ID);
     const int32_t o = ose_readInt32(bundle, -4);
     ose_assert(o >= OSE_BUNDLE_HEADER_LEN);
@@ -131,7 +131,7 @@ static void pushString(ose_bundle bundle,
                        const char * const s,
                        char typetag)
 {
-    ose_assert(ose_isBundle(bundle) == OSETT_TRUE);
+    ose_assert(ose_isBundle(bundle));
     ose_assert(s);
     ose_assert(typetag != OSETT_ID);
     char *b = ose_getBundlePtr(bundle);
@@ -167,7 +167,7 @@ void ose_pushBlob(ose_bundle bundle,
                   int32_t blobsize,
                   const char * const blob)
 {
-    ose_assert(ose_isBundle(bundle) == OSETT_TRUE);
+    ose_assert(ose_isBundle(bundle));
     ose_assert(blobsize >= 0);
     /* blob can be NULL */
     char *b = ose_getBundlePtr(bundle);
@@ -225,7 +225,7 @@ void ose_pushSymbol(ose_bundle bundle, const char * const s)
     defined(OSE_PROVIDE_TYPE_UINT64)
 static void pushInt64(ose_bundle bundle, int64_t i, char typetag)
 {
-    ose_assert(ose_isBundle(bundle) == OSETT_TRUE);
+    ose_assert(ose_isBundle(bundle));
     ose_assert(typetag != OSETT_ID);
     char *b = ose_getBundlePtr(bundle);
     const int32_t o = ose_readInt32(bundle, -4);
@@ -293,7 +293,7 @@ void ose_pushUInt64(ose_bundle bundle, uint64_t i)
 #ifdef OSE_PROVIDE_TYPE_TIMETAG
 void ose_pushTimetag(ose_bundle bundle, uint32_t sec, uint32_t fsec)
 {
-    ose_assert(ose_isBundle(bundle) == OSETT_TRUE);
+    ose_assert(ose_isBundle(bundle));
     char *b = ose_getBundlePtr(bundle);
     const int32_t o = ose_readInt32(bundle, -4);
     ose_assert(o >= OSE_BUNDLE_HEADER_LEN);
@@ -321,7 +321,7 @@ void ose_pushTimetag(ose_bundle bundle, uint32_t sec, uint32_t fsec)
     || defined(OSE_PROVIDE_TYPE_INFINITUM)
 static void pushUnitType(ose_bundle bundle, char typetag)
 {
-    ose_assert(ose_isBundle(bundle) == OSETT_TRUE);
+    ose_assert(ose_isBundle(bundle));
     ose_assert(typetag != OSETT_ID);
     char *b = ose_getBundlePtr(bundle);
     const int32_t o = ose_readInt32(bundle, -4);
@@ -384,7 +384,7 @@ void ose_pushMessage(ose_bundle bundle,
                      int32_t addresslen,
                      int32_t n, ...)
 {
-    ose_assert(ose_isBundle(bundle) == OSETT_TRUE);
+    ose_assert(ose_isBundle(bundle));
     const int32_t o = ose_readInt32(bundle, -4);
     ose_assert(o >= OSE_BUNDLE_HEADER_LEN);
     va_list ap;
@@ -2325,7 +2325,7 @@ void ose_moveStringToAddress(ose_bundle bundle)
 {
     /* swapStringToAddress(bundle); */
     /* dropArg(bundle); */
-    ose_assert(ose_isBundle(bundle) == OSETT_TRUE);
+    ose_assert(ose_isBundle(bundle));
     ose_assert(ose_bundleHasAtLeastNElems(bundle, 1) == OSETT_TRUE);
     int32_t on = 0, sn = 0;
     be1(bundle, &on, &sn);
