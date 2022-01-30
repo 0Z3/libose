@@ -49,14 +49,14 @@ extern "C" {
 #define ose_pnbytes(n) (((n) + 4) & 0xfffffffc)
 #define ose_pstrlen(s) ose_pnbytes(strlen(s))
 
-ose_bool ose_isAddressChar(char c);
-ose_bool ose_isKnownTypetag(char typetag);
-ose_bool ose_isStringType(char typetag);
-ose_bool ose_isIntegerType(char typetag);
-ose_bool ose_isFloatType(char typetag);
-ose_bool ose_isNumericType(char typetag);
-ose_bool ose_isUnitType(char typetag);
-ose_bool ose_isBoolType(char typetag);
+bool ose_isAddressChar(char c);
+bool ose_isKnownTypetag(char typetag);
+bool ose_isStringType(char typetag);
+bool ose_isIntegerType(char typetag);
+bool ose_isFloatType(char typetag);
+bool ose_isNumericType(char typetag);
+bool ose_isUnitType(char typetag);
+bool ose_isBoolType(char typetag);
 
 
 

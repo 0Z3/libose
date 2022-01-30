@@ -1025,8 +1025,7 @@ void ose_bundleAll(ose_bundle bundle)
 
 void ose_bundleFromBottom(ose_bundle bundle)
 {
-    ose_assert(ose_isIntegerType(ose_peekMessageArgType(bundle))
-               == OSETT_TRUE);
+    ose_assert(ose_isIntegerType(ose_peekMessageArgType(bundle)));
     int32_t s = ose_readInt32(bundle, -4);
     char *b = ose_getBundlePtr(bundle);
     int32_t n = ose_popInt32(bundle);
@@ -1049,8 +1048,7 @@ void ose_bundleFromBottom(ose_bundle bundle)
 
 void ose_bundleFromTop(ose_bundle bundle)
 {
-    ose_assert(ose_isIntegerType(ose_peekMessageArgType(bundle))
-               == OSETT_TRUE);
+    ose_assert(ose_isIntegerType(ose_peekMessageArgType(bundle)));
     char *b = ose_getBundlePtr(bundle);
     int32_t n = ose_popInt32(bundle);
     ose_assert(ose_bundleHasAtLeastNElems(bundle, n) == OSETT_TRUE);
@@ -2020,8 +2018,8 @@ void ose_concatenateStrings(ose_bundle bundle)
                                                ose_readByte(bundle, to2),
                                                po2);
     int32_t to1 = to2 + 1;
-    ose_assert(ose_isStringType(ose_readByte(bundle, to2)) == OSETT_TRUE &&
-               ose_isStringType(ose_readByte(bundle, to1)) == OSETT_TRUE);
+    ose_assert(ose_isStringType(ose_readByte(bundle, to2)) &&
+               ose_isStringType(ose_readByte(bundle, to1)));
     char *b = ose_getBundlePtr(bundle);
     int32_t s2len = strlen(b + po2);
     int32_t s1len = strlen(b + po1);
@@ -2079,7 +2077,7 @@ static void swapStringToAddress(ose_bundle bundle)
     int32_t len1 = ose_getPaddedStringLen(bundle, so + 4);
     int32_t to, ntt, lto, po, lpo;
     ose_getNthPayloadItem(bundle, 1, so, &to, &ntt, &lto, &po, &lpo);
-    ose_assert(ose_isStringType(ose_readByte(bundle, lto)) == OSETT_TRUE);
+    ose_assert(ose_isStringType(ose_readByte(bundle, lto)));
     int32_t len2 = ose_getPaddedStringLen(bundle, lpo);
     char *b = ose_getBundlePtr(bundle);
     int32_t o = so + 4;
@@ -2249,7 +2247,7 @@ void ose_decatenateStringFromEnd(ose_bundle bundle)
     ose_rassert(ose_peekType(bundle) == OSETT_MESSAGE, 1);
     ose_rassert(ose_peekMessageArgType(bundle) == OSETT_INT32, 1);
     int32_t n = ose_popInt32(bundle);
-    ose_rassert(ose_isStringType(ose_peekMessageArgType(bundle)) == OSETT_TRUE, 1);
+    ose_rassert(ose_isStringType(ose_peekMessageArgType(bundle)), 1);
     ose_decatenateStringFromEnd_impl(bundle, n);
 }
 
@@ -2265,7 +2263,7 @@ void ose_decatenateStringFromStart(ose_bundle bundle)
     ose_rassert(ose_peekType(bundle) == OSETT_MESSAGE, 1);
     ose_rassert(ose_peekMessageArgType(bundle) == OSETT_INT32, 1);
     int32_t n = ose_popInt32(bundle);
-    ose_rassert(ose_isStringType(ose_peekMessageArgType(bundle)) == OSETT_TRUE, 1);
+    ose_rassert(ose_isStringType(ose_peekMessageArgType(bundle)), 1);
     ose_decatenateStringFromStart_impl(bundle, n);
 }
 
@@ -2311,9 +2309,9 @@ void ose_joinStrings(ose_bundle bundle)
                           &tonm1, &nttnm1, &ltonm1, &ponm1, &lponm1);
     ose_getNthPayloadItem(bundle, 1, on,
                           &ton, &nttn, &lton, &pon, &lpon);
-    ose_rassert(ose_isStringType(ose_readByte(bundle, ltonm2)) == OSETT_TRUE, 1);
-    ose_rassert(ose_isStringType(ose_readByte(bundle, ltonm1)) == OSETT_TRUE, 1);
-    ose_rassert(ose_isStringType(ose_readByte(bundle, lton)) == OSETT_TRUE, 1);
+    ose_rassert(ose_isStringType(ose_readByte(bundle, ltonm2)), 1);
+    ose_rassert(ose_isStringType(ose_readByte(bundle, ltonm1)), 1);
+    ose_rassert(ose_isStringType(ose_readByte(bundle, lton)), 1);
     ose_rassert(nttnm1 == 2, 1);
     ose_rassert(nttn == 2, 1);
     ose_swap(bundle);
@@ -2542,7 +2540,7 @@ void ose_trimStringEnd(ose_bundle bundle)
     int32_t o = ose_getLastBundleElemOffset(bundle);
     int32_t to, ntt, lto, po, lpo;
     ose_getNthPayloadItem(bundle, 1, o, &to, &ntt, &lto, &po, &lpo);
-    ose_assert(ose_isStringType(ose_readByte(bundle, lto)) == OSETT_TRUE);
+    ose_assert(ose_isStringType(ose_readByte(bundle, lto)));
     int32_t s = ose_getStringLen(bundle, lpo);
     char *p = ose_readString(bundle, lpo);
     int32_t i = s - 1;
@@ -2568,7 +2566,7 @@ void ose_trimStringStart(ose_bundle bundle)
     int32_t o = ose_getLastBundleElemOffset(bundle);
     int32_t to, ntt, lto, po, lpo;
     ose_getNthPayloadItem(bundle, 1, o, &to, &ntt, &lto, &po, &lpo);
-    ose_assert(ose_isStringType(ose_readByte(bundle, lto)) == OSETT_TRUE);
+    ose_assert(ose_isStringType(ose_readByte(bundle, lto)));
     int32_t s = ose_getStringLen(bundle, lpo);
     char *p = ose_readString(bundle, lpo);
     int32_t i = 0;
@@ -2612,8 +2610,8 @@ void ose_match(ose_bundle bundle)
                           &lton,
                           &pon,
                           &lpon);
-    ose_assert(ose_isStringType(ose_readByte(bundle, ltonm1)) == OSETT_TRUE
-               && ose_isStringType(ose_readByte(bundle, lton)) == OSETT_TRUE);
+    ose_assert(ose_isStringType(ose_readByte(bundle, ltonm1))
+               && ose_isStringType(ose_readByte(bundle, lton)));
     char *b = ose_getBundlePtr(bundle);
     if(strcmp(b + lponm1, b + lpon))
     {
@@ -2646,8 +2644,8 @@ void ose_pmatch(ose_bundle bundle)
                           &lton,
                           &pon,
                           &lpon);
-    ose_assert(ose_isStringType(ose_readByte(bundle, ltonm1)) == OSETT_TRUE
-               && ose_isStringType(ose_readByte(bundle, lton)) == OSETT_TRUE);
+    ose_assert(ose_isStringType(ose_readByte(bundle, ltonm1))
+               && ose_isStringType(ose_readByte(bundle, lton)));
     char *b = ose_getBundlePtr(bundle);
     int po = 0, ao = 0;
     int r = ose_match_pattern(b + lponm1, b + lpon, &po, &ao);
@@ -2682,7 +2680,7 @@ void ose_route(ose_bundle bundle)
                           &pon,
                           &lpon);
     int a = 0;
-    if(ose_isStringType(ose_readByte(bundle, lton)) == OSETT_TRUE)
+    if(ose_isStringType(ose_readByte(bundle, lton)))
     {
     }
     else
@@ -2741,7 +2739,7 @@ void ose_routeWithDelegation(ose_bundle bundle)
     int32_t _plo = plo;
     while((tt = ose_readByte(bundle, tto + n)) != 0)
     {
-        if(ose_isStringType(tt) == OSETT_TRUE)
+        if(ose_isStringType(tt))
         {
             b[tto + n] = _plo - plo;
             _plo += ose_getPayloadItemSize(bundle, tt, _plo);
@@ -2851,7 +2849,7 @@ void ose_gather(ose_bundle bundle)
     int32_t _plo = plo;
     while((tt = ose_readByte(bundle, tto + n)) != 0)
     {
-        if(ose_isStringType(tt) == OSETT_TRUE)
+        if(ose_isStringType(tt))
         {
             b[tto + n] = _plo - plo;
             _plo += ose_getPayloadItemSize(bundle, tt, _plo);
@@ -3133,7 +3131,7 @@ void ose_assign(ose_bundle bundle)
 
     int32_t to, ntt, lto, po, lpo;
     ose_getNthPayloadItem(bundle, 1, on, &to, &ntt, &lto, &po, &lpo);
-    ose_rassert(ose_isStringType(ose_readByte(bundle, lto)) == OSETT_TRUE, 1);
+    ose_rassert(ose_isStringType(ose_readByte(bundle, lto)), 1);
 
     char *b = ose_getBundlePtr(bundle);
     const char addylen = strlen(b + lpo);
@@ -3165,7 +3163,7 @@ void ose_lookup(ose_bundle bundle)
 
     int32_t to, ntt, lto, po, lpo;
     ose_getNthPayloadItem(bundle, 1, on, &to, &ntt, &lto, &po, &lpo);
-    ose_rassert(ose_isStringType(ose_readByte(bundle, lto)) == OSETT_TRUE, 1);
+    ose_rassert(ose_isStringType(ose_readByte(bundle, lto)), 1);
 
     char *b = ose_getBundlePtr(bundle);
 
@@ -3231,9 +3229,9 @@ void ose_add(ose_bundle bundle)
     ose_getNthPayloadItem(bundle, 1, on,
                           &nto, &nntt, &nlto, &npo, &nlpo);
     char t2 = ose_readByte(bundle, nm1lto); (void)t2;
-    ose_assert(ose_isNumericType(t2) == OSETT_TRUE);
+    ose_assert(ose_isNumericType(t2));
     char t1 = ose_readByte(bundle, nlto);
-    ose_assert(ose_isNumericType(t1) == OSETT_TRUE);
+    ose_assert(ose_isNumericType(t1));
     ose_assert(t1 == t2);
     char *b = ose_getBundlePtr(bundle);
     switch(t1)
@@ -3304,10 +3302,10 @@ void ose_add(ose_bundle bundle)
 void ose_sub(ose_bundle bundle)
 {
     char t1 = ose_peekMessageArgType(bundle);
-    ose_assert(ose_isNumericType(t1) == OSETT_TRUE);
+    ose_assert(ose_isNumericType(t1));
     ose_swap(bundle);
     char t2 = ose_peekMessageArgType(bundle);(void)t2;
-    ose_assert(ose_isNumericType(t2) == OSETT_TRUE);
+    ose_assert(ose_isNumericType(t2));
     ose_assert(t1 == t2);
     switch(t1)
     {
@@ -3373,10 +3371,10 @@ void ose_sub(ose_bundle bundle)
 void ose_mul(ose_bundle bundle)
 {
     char t1 = ose_peekMessageArgType(bundle);
-    ose_assert(ose_isNumericType(t1) == OSETT_TRUE);
+    ose_assert(ose_isNumericType(t1));
     ose_swap(bundle);
     char t2 = ose_peekMessageArgType(bundle);(void)t2;
-    ose_assert(ose_isNumericType(t2) == OSETT_TRUE);
+    ose_assert(ose_isNumericType(t2));
     ose_assert(t1 == t2);
     switch(t1)
     {
@@ -3442,10 +3440,10 @@ void ose_mul(ose_bundle bundle)
 void ose_div(ose_bundle bundle)
 {
     char t1 = ose_peekMessageArgType(bundle);
-    ose_assert(ose_isNumericType(t1) == OSETT_TRUE);
+    ose_assert(ose_isNumericType(t1));
     ose_swap(bundle);
     char t2 = ose_peekMessageArgType(bundle);(void)t2;
-    ose_assert(ose_isNumericType(t2) == OSETT_TRUE);
+    ose_assert(ose_isNumericType(t2));
     ose_assert(t1 == t2);
     switch(t1){
     case OSETT_INT32:
@@ -3518,9 +3516,9 @@ void ose_mod(ose_bundle bundle)
     ose_getNthPayloadItem(bundle, 1, on,
                           &nto, &nntt, &nlto, &npo, &nlpo);
     char t2 = ose_readByte(bundle, nm1lto);(void)t2;
-    ose_assert(ose_isNumericType(t2) == OSETT_TRUE);
+    ose_assert(ose_isNumericType(t2));
     char t1 = ose_readByte(bundle, nlto);
-    ose_assert(ose_isNumericType(t1) == OSETT_TRUE);
+    ose_assert(ose_isNumericType(t1));
     ose_assert(t1 == t2);
     char *b = ose_getBundlePtr(bundle);
     switch(t1)
@@ -3587,10 +3585,10 @@ void ose_mod(ose_bundle bundle)
 void ose_pow(ose_bundle bundle)
 {
     char t1 = ose_peekMessageArgType(bundle);
-    ose_assert(ose_isNumericType(t1) == OSETT_TRUE);
+    ose_assert(ose_isNumericType(t1));
     ose_swap(bundle);
     char t2 = ose_peekMessageArgType(bundle);(void)t2;
-    ose_assert(ose_isNumericType(t2) == OSETT_TRUE);
+    ose_assert(ose_isNumericType(t2));
     ose_assert(t1 == t2);
     switch(t1)
     {
@@ -3656,7 +3654,7 @@ void ose_pow(ose_bundle bundle)
 void ose_neg(ose_bundle bundle)
 {
     char t1 = ose_peekMessageArgType(bundle);
-    ose_assert(ose_isNumericType(t1) == OSETT_TRUE);
+    ose_assert(ose_isNumericType(t1));
     switch(t1)
     {
     case OSETT_INT32:
@@ -3785,9 +3783,9 @@ void ose_lte(ose_bundle bundle)
     ose_getNthPayloadItem(bundle, 1, on,
                           &nto, &nntt, &nlto, &npo, &nlpo);
     char t2 = ose_readByte(bundle, nm1lto); (void)t2;
-    ose_assert(ose_isNumericType(t2) == OSETT_TRUE);
+    ose_assert(ose_isNumericType(t2));
     char t1 = ose_readByte(bundle, nlto);
-    ose_assert(ose_isNumericType(t1) == OSETT_TRUE);
+    ose_assert(ose_isNumericType(t1));
     ose_assert(t1 == t2);
     char *b = ose_getBundlePtr(bundle);
     switch(t1)
@@ -3866,9 +3864,9 @@ void ose_lt(ose_bundle bundle)
     ose_getNthPayloadItem(bundle, 1, on,
                           &nto, &nntt, &nlto, &npo, &nlpo);
     char t2 = ose_readByte(bundle, nm1lto); (void)t2;
-    ose_assert(ose_isNumericType(t2) == OSETT_TRUE);
+    ose_assert(ose_isNumericType(t2));
     char t1 = ose_readByte(bundle, nlto);
-    ose_assert(ose_isNumericType(t1) == OSETT_TRUE);
+    ose_assert(ose_isNumericType(t1));
     ose_assert(t1 == t2);
     char *b = ose_getBundlePtr(bundle);
     switch(t1)

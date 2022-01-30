@@ -179,7 +179,7 @@ static int32_t ose_pprintBundleElem_msg(ose_bundle bundle,
 		nn += n;
 		INCP(bufp, n);
 		INCL(bufp, bufl, n);
-		if(ose_isKnownTypetag(tt) == OSETT_TRUE){
+		if(ose_isKnownTypetag(tt)){
 			plo += ose_getPayloadItemSize(bundle, tt, plo);
 		}else{
 			if(ose_readByte(bundle, tt + 1) == 0){

@@ -28,11 +28,11 @@
 #include "ose_util.h"
 #include "ose_match.h"
 
-ose_bool ose_isAddressChar(const char c)
+bool ose_isAddressChar(const char c)
 {
     if(c < 32)
     {
-        return OSETT_FALSE;
+        return false;
     }
     switch(c)
     {
@@ -46,13 +46,12 @@ ose_bool ose_isAddressChar(const char c)
     case ']':
     case '{':
     case '}':
-        return OSETT_FALSE;
-    default: return OSETT_TRUE;
-        
+        return false;
+    default: return true;
     }
 }
 
-ose_bool ose_isKnownTypetag(const char typetag)
+bool ose_isKnownTypetag(const char typetag)
 {
     switch(typetag)
     {
@@ -61,61 +60,61 @@ ose_bool ose_isKnownTypetag(const char typetag)
     case OSETT_FLOAT:
     case OSETT_STRING:
     case OSETT_BLOB:
-        return OSETT_TRUE;
+        return true;
 #ifdef OSE_PROVIDE_TYPE_SYMBOL
     case OSETT_SYMBOL:
-        return OSETT_TRUE;
+        return true;
 #endif
 #ifdef OSE_PROVIDE_TYPE_DOUBLE
     case OSETT_DOUBLE:
-        return OSETT_TRUE;
+        return true;
 #endif
 #ifdef OSE_PROVIDE_TYPE_INT8
     case OSETT_INT8:
-        return OSETT_TRUE;
+        return true;
 #endif
 #ifdef OSE_PROVIDE_TYPE_UINT8
     case OSETT_UINT8:
-        return OSETT_TRUE;
+        return true;
 #endif
 #ifdef OSE_PROVIDE_TYPE_UINT32
     case OSETT_UINT32:
-        return OSETT_TRUE;
+        return true;
 #endif
 #ifdef OSE_PROVIDE_TYPE_INT64
     case OSETT_INT64:
-        return OSETT_TRUE;
+        return true;
 #endif
 #ifdef OSE_PROVIDE_TYPE_UINT64
     case OSETT_UINT64:
-        return OSETT_TRUE;
+        return true;
 #endif
 #ifdef OSE_PROVIDE_TYPE_TIMETAG
     case OSETT_TIMETAG:
-        return OSETT_TRUE;
+        return true;
 #endif
 #ifdef OSE_PROVIDE_TYPE_TRUE
-    case OSETT_TRUE:
-        return OSETT_TRUE;
+    case true:
+        return true;
 #endif
 #ifdef OSE_PROVIDE_TYPE_FALSE
     case OSETT_FALSE:
-        return OSETT_TRUE;
+        return true;
 #endif
 #ifdef OSE_PROVIDE_TYPE_NULL
     case OSETT_NULL:
-        return OSETT_TRUE;
+        return true;
 #endif
 #ifdef OSE_PROVIDE_TYPE_INFINITUM
     case OSETT_INFINITUM:
-        return OSETT_TRUE;
+        return true;
 #endif
     default:
-        return OSETT_FALSE;
+        return false;
     }
 }
 
-ose_bool ose_isStringType(const char typetag)
+bool ose_isStringType(const char typetag)
 {
     switch(typetag)
     {
@@ -123,13 +122,13 @@ ose_bool ose_isStringType(const char typetag)
 #ifdef OSE_PROVIDE_TYPE_SYMBOL
     case OSETT_SYMBOL:
 #endif
-        return OSETT_TRUE;
+        return true;
     default:
-        return OSETT_FALSE;
+        return false;
     }
 }
 
-ose_bool ose_isIntegerType(const char typetag)
+bool ose_isIntegerType(const char typetag)
 {
     switch(typetag)
     {
@@ -149,13 +148,13 @@ ose_bool ose_isIntegerType(const char typetag)
 #ifdef OSE_PROVIDE_TYPE_UINT64
     case OSETT_UINT64:
 #endif
-        return OSETT_TRUE;
+        return true;
     default:
-        return OSETT_FALSE;
+        return false;
     }
 }
 
-ose_bool ose_isFloatType(const char typetag)
+bool ose_isFloatType(const char typetag)
 {
     switch(typetag)
     {
@@ -163,30 +162,30 @@ ose_bool ose_isFloatType(const char typetag)
 #ifdef OSE_PROVIDE_TYPE_DOUBLE
     case OSETT_DOUBLE:
 #endif
-        return OSETT_TRUE;
+        return true;
     default:
-        return OSETT_FALSE;
+        return false;
     }
 }
 
-ose_bool ose_isNumericType(const char typetag)
+bool ose_isNumericType(const char typetag)
 {
-    if(ose_isIntegerType(typetag) == OSETT_TRUE
-       || ose_isFloatType(typetag) == OSETT_TRUE
+    if(ose_isIntegerType(typetag)
+       || ose_isFloatType(typetag)
 #ifdef OSE_PROVIDE_TYPE_TIMETAG
        || typetag == OSETT_TIMETAG
 #endif
         )
     {
-        return OSETT_TRUE;
+        return true;
     }
     else
     {
-        return OSETT_FALSE;
+        return false;
     }
 }
 
-ose_bool ose_isUnitType(const char typetag)
+bool ose_isUnitType(const char typetag)
 {
     switch(typetag)
     {
@@ -198,21 +197,21 @@ ose_bool ose_isUnitType(const char typetag)
 #ifdef OSE_PROVIDE_TYPE_INFINITUM
     case OSETT_INFINITUM:
 #endif
-        return OSETT_TRUE;
+        return true;
     default:
-        return OSETT_FALSE;
+        return false;
     }
 }
 
-ose_bool ose_isBoolType(const char typetag)
+bool ose_isBoolType(const char typetag)
 {
     switch(typetag)
     {
     case OSETT_TRUE:
     case OSETT_FALSE:
-        return OSETT_TRUE;
+        return true;
     default:
-        return OSETT_FALSE;
+        return false;
     }
 }
 
@@ -802,7 +801,7 @@ int32_t ose_getFirstOffsetForFullPMatch(ose_constbundle bundle,
 
 int32_t ose_getTypedDatumSize(const char typetag, const char * const ptr)
 {
-    ose_assert(ose_isKnownTypetag(typetag) == OSETT_TRUE);
+    ose_assert(ose_isKnownTypetag(typetag));
     switch(typetag)
     {
     case OSETT_ID:
@@ -888,7 +887,7 @@ int32_t ose_getPayloadItemSize(ose_constbundle bundle,
 int32_t ose_getTypedDatumLength(const char typetag,
                                 const char * const ptr)
 {
-    ose_assert(ose_isKnownTypetag(typetag) == OSETT_TRUE);
+    ose_assert(ose_isKnownTypetag(typetag));
     switch(typetag)
     {
     case OSETT_ID:

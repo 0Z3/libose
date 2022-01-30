@@ -41,12 +41,13 @@
     void ose_builtin_##name(ose_bundle bundle)              \
     {                                                       \
         ose_bundle vm_s = OSEVM_STACK(bundle);              \
-        ose_assert(ose_isIntegerType(ose_peekType(vm_s))    \
-                   == OSETT_TRUE);                          \
+        /* this assertion is wrong, but will be replaced by a */    \
+        /* version of ose_popInt32 that we can trust, and that  */  \
+        /* sets the status on error */                              \
+        /* ose_assert(ose_isIntegerType(ose_peekType(vm_s)));  \ */\
         int32_t i = ose_popInt32(vm_s);                     \
-        ose_##name(i) == OSETT_TRUE                         \
-            ? ose_pushInt32(vm_s, 1)                        \
-            : ose_pushInt32(vm_s, 0);                       \
+        bool r = ose_##name(i);                             \
+        ose_pushInt32(vm_s, r == true ? 1 : 0);             \
     }
 
 OSE_BUILTIN_DEFN(2drop)
@@ -302,12 +303,12 @@ void ose_builtin_copyBundle(ose_bundle osevm)
 {
     ose_bundle vm_s = OSEVM_STACK(osevm);
     ose_rassert(ose_peekType(vm_s) == OSETT_MESSAGE, 1);
-    ose_rassert(ose_isStringType(ose_peekMessageArgType(vm_s)) == OSETT_TRUE, 1);
+    ose_rassert(ose_isStringType(ose_peekMessageArgType(vm_s)), 1);
     ose_constbundle src = ose_enter(osevm, ose_peekString(vm_s));
     ose_drop(vm_s);
 
     ose_rassert(ose_peekType(vm_s) == OSETT_MESSAGE, 1);
-    ose_rassert(ose_isStringType(ose_peekMessageArgType(vm_s)) == OSETT_TRUE, 1);
+    ose_rassert(ose_isStringType(ose_peekMessageArgType(vm_s)), 1);
     ose_bundle dest = ose_enter(osevm, ose_peekString(vm_s));
     ose_drop(vm_s);
 
@@ -318,12 +319,12 @@ void ose_builtin_appendBundle(ose_bundle osevm)
 {
     ose_bundle vm_s = OSEVM_STACK(osevm);
     ose_rassert(ose_peekType(vm_s) == OSETT_MESSAGE, 1);
-    ose_rassert(ose_isStringType(ose_peekMessageArgType(vm_s)) == OSETT_TRUE, 1);
+    ose_rassert(ose_isStringType(ose_peekMessageArgType(vm_s)), 1);
     ose_bundle src = ose_enter(osevm, ose_peekString(vm_s));
     ose_drop(vm_s);
 
     ose_rassert(ose_peekType(vm_s) == OSETT_MESSAGE, 1);
-    ose_rassert(ose_isStringType(ose_peekMessageArgType(vm_s)) == OSETT_TRUE, 1);
+    ose_rassert(ose_isStringType(ose_peekMessageArgType(vm_s)), 1);
     ose_bundle dest = ose_enter(osevm, ose_peekString(vm_s));
     ose_drop(vm_s);
 
@@ -334,12 +335,12 @@ void ose_builtin_replaceBundle(ose_bundle osevm)
 {
     ose_bundle vm_s = OSEVM_STACK(osevm);
     ose_rassert(ose_peekType(vm_s) == OSETT_MESSAGE, 1);
-    ose_rassert(ose_isStringType(ose_peekMessageArgType(vm_s)) == OSETT_TRUE, 1);
+    ose_rassert(ose_isStringType(ose_peekMessageArgType(vm_s)), 1);
     ose_bundle src = ose_enter(osevm, ose_peekString(vm_s));
     ose_drop(vm_s);
 
     ose_rassert(ose_peekType(vm_s) == OSETT_MESSAGE, 1);
-    ose_rassert(ose_isStringType(ose_peekMessageArgType(vm_s)) == OSETT_TRUE, 1);
+    ose_rassert(ose_isStringType(ose_peekMessageArgType(vm_s)), 1);
     ose_bundle dest = ose_enter(osevm, ose_peekString(vm_s));
     ose_drop(vm_s);
 
@@ -350,12 +351,12 @@ void ose_builtin_moveElem(ose_bundle osevm)
 {
     ose_bundle vm_s = OSEVM_STACK(osevm);
     ose_rassert(ose_peekType(vm_s) == OSETT_MESSAGE, 1);
-    ose_rassert(ose_isStringType(ose_peekMessageArgType(vm_s)) == OSETT_TRUE, 1);
+    ose_rassert(ose_isStringType(ose_peekMessageArgType(vm_s)), 1);
     ose_bundle src = ose_enter(osevm, ose_peekString(vm_s));
     ose_drop(vm_s);
 
     ose_rassert(ose_peekType(vm_s) == OSETT_MESSAGE, 1);
-    ose_rassert(ose_isStringType(ose_peekMessageArgType(vm_s)) == OSETT_TRUE, 1);
+    ose_rassert(ose_isStringType(ose_peekMessageArgType(vm_s)), 1);
     ose_bundle dest = ose_enter(osevm, ose_peekString(vm_s));
     ose_drop(vm_s);
 
@@ -366,12 +367,12 @@ void ose_builtin_copyElem(ose_bundle osevm)
 {
     ose_bundle vm_s = OSEVM_STACK(osevm);
     ose_rassert(ose_peekType(vm_s) == OSETT_MESSAGE, 1);
-    ose_rassert(ose_isStringType(ose_peekMessageArgType(vm_s)) == OSETT_TRUE, 1);
+    ose_rassert(ose_isStringType(ose_peekMessageArgType(vm_s)), 1);
     ose_constbundle src = ose_enter(osevm, ose_peekString(vm_s));
     ose_drop(vm_s);
 
     ose_rassert(ose_peekType(vm_s) == OSETT_MESSAGE, 1);
-    ose_rassert(ose_isStringType(ose_peekMessageArgType(vm_s)) == OSETT_TRUE, 1);
+    ose_rassert(ose_isStringType(ose_peekMessageArgType(vm_s)), 1);
     ose_bundle dest = ose_enter(osevm, ose_peekString(vm_s));
     ose_drop(vm_s);
 

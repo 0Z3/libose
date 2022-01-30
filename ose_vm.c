@@ -689,7 +689,7 @@ static void applyControl(ose_bundle osevm, char *address)
     if(ose_peekType(vm_c) == OSETT_MESSAGE)
     {
         char t = ose_peekMessageArgType(vm_c);
-        if(ose_isStringType(t) == OSETT_FALSE)
+        if(!ose_isStringType(t))
         {
             ose_copyElem(vm_c, vm_s);
             return;
