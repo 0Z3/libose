@@ -127,6 +127,16 @@ extern "C" {
 
 
 
+#ifdef OSE_DEBUG
+int32_t ose_readSize(ose_bundle bundle);
+#else
+#define ose_readSize(b)                                       \
+    ose_ntohl(*((int32_t *)(ose_getBundlePtr((b)) + OSE_CONTEXT_BUNDLE_SIZE_OFFSET)))
+#endif
+
+
+
+
 /** 
     @brief The overhead in bytes of a context message.
 */

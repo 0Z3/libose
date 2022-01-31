@@ -95,7 +95,7 @@ static void pushInt32(ose_bundle bundle, int32_t i, char typetag)
 {
     ose_assert(ose_isBundle(bundle));
     ose_assert(typetag != OSETT_ID);
-    const int32_t o = ose_readInt32(bundle, -4);
+    const int32_t o = ose_readSize(bundle);
     ose_assert(o >= OSE_BUNDLE_HEADER_LEN);
     char *b = ose_getBundlePtr(bundle);
     ose_assert(b);
@@ -135,7 +135,7 @@ static void pushString(ose_bundle bundle,
     ose_assert(s);
     ose_assert(typetag != OSETT_ID);
     char *b = ose_getBundlePtr(bundle);
-    const int32_t o = ose_readInt32(bundle, -4);
+    const int32_t o = ose_readSize(bundle);
     ose_assert(o >= OSE_BUNDLE_HEADER_LEN);
     const int32_t sl = strlen(s);
     const int32_t psl = ose_pnbytes(sl);
@@ -171,7 +171,7 @@ void ose_pushBlob(ose_bundle bundle,
     ose_assert(blobsize >= 0);
     /* blob can be NULL */
     char *b = ose_getBundlePtr(bundle);
-    const int32_t o = ose_readInt32(bundle, -4);
+    const int32_t o = ose_readSize(bundle);
     ose_assert(o >= OSE_BUNDLE_HEADER_LEN);
     int32_t padded_blobsize = blobsize;
     while(padded_blobsize % 4)
@@ -228,7 +228,7 @@ static void pushInt64(ose_bundle bundle, int64_t i, char typetag)
     ose_assert(ose_isBundle(bundle));
     ose_assert(typetag != OSETT_ID);
     char *b = ose_getBundlePtr(bundle);
-    const int32_t o = ose_readInt32(bundle, -4);
+    const int32_t o = ose_readSize(bundle);
     ose_assert(o >= OSE_BUNDLE_HEADER_LEN);
     const int32_t n = 4 + OSE_ADDRESS_ANONVAL_SIZE + 4 + 8;
     ose_incSize(bundle, n);
@@ -295,7 +295,7 @@ void ose_pushTimetag(ose_bundle bundle, uint32_t sec, uint32_t fsec)
 {
     ose_assert(ose_isBundle(bundle));
     char *b = ose_getBundlePtr(bundle);
-    const int32_t o = ose_readInt32(bundle, -4);
+    const int32_t o = ose_readSize(bundle);
     ose_assert(o >= OSE_BUNDLE_HEADER_LEN);
     const int32_t n = 4 + OSE_ADDRESS_ANONVAL_SIZE + 4 + 4 + 4;
     ose_incSize(bundle, n);
@@ -324,7 +324,7 @@ static void pushUnitType(ose_bundle bundle, char typetag)
     ose_assert(ose_isBundle(bundle));
     ose_assert(typetag != OSETT_ID);
     char *b = ose_getBundlePtr(bundle);
-    const int32_t o = ose_readInt32(bundle, -4);
+    const int32_t o = ose_readSize(bundle);
     ose_assert(o >= OSE_BUNDLE_HEADER_LEN);
     const int32_t n = 4 + OSE_ADDRESS_ANONVAL_SIZE + 4;
     ose_incSize(bundle, n);
@@ -373,7 +373,7 @@ void ose_pushInfinitum(ose_bundle bundle)
 void ose_pushAlignedPtr(ose_bundle bundle, const void *ptr)
 {
     ose_pushBlob(bundle, OSE_INTPTR2, NULL);
-    int32_t o = ose_readInt32(bundle, -4);
+    int32_t o = ose_readSize(bundle);
     o -= OSE_INTPTR2;
     ose_assert(o > OSE_BUNDLE_HEADER_LEN);
     ose_writeAlignedPtr(bundle, o, ptr);
@@ -385,7 +385,7 @@ void ose_pushMessage(ose_bundle bundle,
                      int32_t n, ...)
 {
     ose_assert(ose_isBundle(bundle));
-    const int32_t o = ose_readInt32(bundle, -4);
+    const int32_t o = ose_readSize(bundle);
     ose_assert(o >= OSE_BUNDLE_HEADER_LEN);
     va_list ap;
     va_start(ap, n);
@@ -702,9 +702,9 @@ void ose_dropAtOffset(ose_bundle bundle, int32_t offset)
 {
     char *b = ose_getBundlePtr(bundle);
     ose_assert(b);
-    ose_assert(offset < ose_readInt32(bundle, -4));
+    ose_assert(offset < ose_readSize(bundle));
     int32_t s = ose_readInt32(bundle, offset);
-    ose_assert(offset + s + 4 == ose_readInt32(bundle, -4));
+    ose_assert(offset + s + 4 == ose_readSize(bundle));
     memset(b + offset, 0, s + 4);
     ose_decSize(bundle, (s + 4));
 }
@@ -790,7 +790,7 @@ static void pick(ose_bundle bundle, int32_t *_o1, int32_t *_o2, int32_t *_s)
 {
     int32_t i = ose_popInt32(bundle);
     int32_t n = 0;
-    int32_t s = ose_readInt32(bundle, -4);
+    int32_t s = ose_readSize(bundle);
     int32_t o = OSE_BUNDLE_HEADER_LEN;
     while(o < s)
     {
@@ -834,7 +834,7 @@ void ose_pickMatch_found_impl(ose_bundle bundle, int32_t o, int32_t s)
 {
     ose_drop(bundle);
     char *b = ose_getBundlePtr(bundle);
-    s = ose_readInt32(bundle, -4);
+    s = ose_readSize(bundle);
     int32_t ss = ose_readInt32(bundle, o);
     ose_incSize(bundle, ss + 4);
     memcpy(b + s, b + o, ss + 4);
@@ -844,7 +844,7 @@ int32_t ose_pickMatch_impl(ose_bundle bundle)
 {
     char *addr = ose_peekString(bundle);
     int32_t o = OSE_BUNDLE_HEADER_LEN;
-    int32_t s = ose_readInt32(bundle, -4);
+    int32_t s = ose_readSize(bundle);
     while(o < s)
     {
         if(!strcmp(addr, ose_readString(bundle, o + 4)))
@@ -866,7 +866,7 @@ int32_t ose_pickPMatch_impl(ose_bundle bundle)
 {
     char *addr = ose_peekString(bundle);
     int32_t o = OSE_BUNDLE_HEADER_LEN;
-    int32_t s = ose_readInt32(bundle, -4);
+    int32_t s = ose_readSize(bundle);
     while(o < s)
     {
         int po = 0, ao = 0;
@@ -900,7 +900,7 @@ void ose_roll(ose_bundle bundle)
 void ose_rollBottom(ose_bundle bundle)
 {
     int32_t o = OSE_BUNDLE_HEADER_LEN;
-    int32_t s = ose_readInt32(bundle, -4);
+    int32_t s = ose_readSize(bundle);
     ose_assert(o < s);
     char *b = ose_getBundlePtr(bundle);
     int32_t ss = ose_readInt32(bundle, o);
@@ -914,14 +914,14 @@ int32_t ose_rollMatch_impl(ose_bundle bundle)
 {
     char *addr = ose_peekString(bundle);
     int32_t o = OSE_BUNDLE_HEADER_LEN;
-    int32_t s = ose_readInt32(bundle, -4);
+    int32_t s = ose_readSize(bundle);
     while(o < s)
     {
         if(!strcmp(addr, ose_readString(bundle, o + 4)))
         {
             ose_drop(bundle);
             char *b = ose_getBundlePtr(bundle);
-            s = ose_readInt32(bundle, -4);
+            s = ose_readSize(bundle);
             int32_t ss = ose_readInt32(bundle, o);
             ose_incSize(bundle, ss + 4);
             memcpy(b + s, b + o, ss + 4);
@@ -1011,7 +1011,7 @@ void ose_tuck(ose_bundle bundle)
 
 void ose_bundleAll(ose_bundle bundle)
 {
-    int32_t s = ose_readInt32(bundle, -4);
+    int32_t s = ose_readSize(bundle);
     char *b = ose_getBundlePtr(bundle);
     memmove(b + OSE_BUNDLE_HEADER_LEN + 4 + OSE_BUNDLE_HEADER_LEN,
             b + OSE_BUNDLE_HEADER_LEN,
@@ -1026,7 +1026,7 @@ void ose_bundleAll(ose_bundle bundle)
 void ose_bundleFromBottom(ose_bundle bundle)
 {
     ose_assert(ose_isIntegerType(ose_peekMessageArgType(bundle)));
-    int32_t s = ose_readInt32(bundle, -4);
+    int32_t s = ose_readSize(bundle);
     char *b = ose_getBundlePtr(bundle);
     int32_t n = ose_popInt32(bundle);
     ose_assert(ose_bundleHasAtLeastNElems(bundle, n));
@@ -1083,7 +1083,7 @@ void ose_bundleFromTop(ose_bundle bundle)
 
 void ose_clear(ose_bundle bundle)
 {
-    int32_t s = ose_readInt32(bundle, -4);
+    int32_t s = ose_readSize(bundle);
     memset(ose_getBundlePtr(bundle) + OSE_BUNDLE_HEADER_LEN,
            0,
            s - OSE_BUNDLE_HEADER_LEN);
@@ -1297,7 +1297,7 @@ void ose_popAllBundle(ose_bundle bundle)
     int32_t onm1, snm1, on, sn;
     be2(bundle, &onm1, &snm1, &on, &sn);
     ose_popAll(bundle);
-    int32_t bs = ose_readInt32(bundle, -4) - onm1 - 4;
+    int32_t bs = ose_readSize(bundle) - onm1 - 4;
     ose_writeInt32(bundle, onm1, bs);
 }
 
@@ -1308,13 +1308,13 @@ void ose_popAllDropBundle(ose_bundle bundle)
     int32_t onm1, snm1, on, sn;
     be2(bundle, &onm1, &snm1, &on, &sn);
     ose_popAllDrop(bundle);
-    int32_t bs = ose_readInt32(bundle, -4) - onm1 - 4;
+    int32_t bs = ose_readSize(bundle) - onm1 - 4;
     ose_writeInt32(bundle, onm1, bs);
 }
 
 void ose_push(ose_bundle bundle)
 {
-    int32_t s = ose_readInt32(bundle, -4);
+    int32_t s = ose_readSize(bundle);
     char *b = ose_getBundlePtr(bundle);
     if(s <= 16)
     {
@@ -1728,7 +1728,7 @@ void ose_unpack(ose_bundle bundle)
             tt = ose_readByte(bundle, to);
             po += ps;
         }
-        int32_t bs = ose_readInt32(bundle, -4);
+        int32_t bs = ose_readSize(bundle);
         memcpy(b + o, b + o + s + 4, bs - (o + s + 4));
         memset(b + (bs - (s + 4)), 0, s + 4);
         ose_decSize(bundle, (s + 4));
@@ -1761,7 +1761,7 @@ void ose_unpackDropBundle(ose_bundle bundle)
 
 void ose_countElems(ose_bundle bundle)
 {
-    int32_t s = ose_readInt32(bundle, -4);
+    int32_t s = ose_readSize(bundle);
     int32_t o = OSE_BUNDLE_HEADER_LEN;
     int32_t n = 0;
     while(o < s)
@@ -2493,7 +2493,7 @@ static void swap4Bytes(ose_bundle bundle, int32_t o)
 
 void ose_swap4Bytes(ose_bundle bundle)
 {
-    swap4Bytes(bundle, ose_readInt32(bundle, -4));
+    swap4Bytes(bundle, ose_readSize(bundle));
 }
 
 static void swap8Bytes(ose_bundle bundle, int32_t o)
@@ -2515,7 +2515,7 @@ static void swap8Bytes(ose_bundle bundle, int32_t o)
 
 void ose_swap8Bytes(ose_bundle bundle)
 {
-    swap8Bytes(bundle, ose_readInt32(bundle, -4));
+    swap8Bytes(bundle, ose_readSize(bundle));
 }
 
 static void swapNBytes(ose_bundle bundle, int32_t o, int32_t n)
@@ -2532,7 +2532,7 @@ static void swapNBytes(ose_bundle bundle, int32_t o, int32_t n)
 
 void ose_swapNBytes(ose_bundle bundle)
 {
-    swapNBytes(bundle, ose_readInt32(bundle, -4), ose_popInt32(bundle));
+    swapNBytes(bundle, ose_readSize(bundle), ose_popInt32(bundle));
 }
 
 void ose_trimStringEnd(ose_bundle bundle)
@@ -3144,7 +3144,7 @@ void ose_assign(ose_bundle bundle)
     int32_t data_len = on - data_offset;
     memcpy(b + on + 4 + paddylen, b + data_offset, data_len);
     memcpy(b + onm1 + 4, b + on + 4, paddylen + data_len);
-    int32_t extra = ose_readInt32(bundle, -4)
+    int32_t extra = ose_readSize(bundle)
         - (onm1 + 4 + paddylen + data_len);
         
     memset(b + onm1 + 4 + paddylen + data_len, 0, extra);
@@ -3207,7 +3207,7 @@ void ose_makeBlob(ose_bundle bundle)
 
 void ose_pushBundle(ose_bundle bundle)
 {
-    int32_t wp = ose_readInt32(bundle, -4);
+    int32_t wp = ose_readSize(bundle);
     ose_writeInt32(bundle, wp, OSE_BUNDLE_HEADER_LEN);
     char *b = ose_getBundlePtr(bundle);
     memcpy(b + wp + 4, OSE_BUNDLE_HEADER, OSE_BUNDLE_HEADER_LEN);
@@ -3955,7 +3955,7 @@ void ose_or(ose_bundle bundle)
  **************************************************/
 void be1(ose_bundle bundle, int32_t *on, int32_t *sn)
 {
-    int32_t s = ose_readInt32(bundle, -4);
+    int32_t s = ose_readSize(bundle);
     ose_assert(s > OSE_BUNDLE_HEADER_LEN);
     int32_t o1 = OSE_BUNDLE_HEADER_LEN;
     int32_t s1 = ose_readInt32(bundle, o1);
@@ -3974,7 +3974,7 @@ void be2(ose_bundle bundle,
          int32_t *on,
          int32_t *sn)
 {
-    int32_t s = ose_readInt32(bundle, -4);
+    int32_t s = ose_readSize(bundle);
     ose_assert(s > OSE_BUNDLE_HEADER_LEN);
     int32_t o1 = OSE_BUNDLE_HEADER_LEN;
     int32_t s1 = ose_readInt32(bundle, o1);
@@ -4002,7 +4002,7 @@ void be3(ose_bundle bundle,
          int32_t *on,
          int32_t *sn)
 {
-    int32_t s = ose_readInt32(bundle, -4);
+    int32_t s = ose_readSize(bundle);
     ose_assert(s > OSE_BUNDLE_HEADER_LEN);
     int32_t o1 = OSE_BUNDLE_HEADER_LEN;
     int32_t s1 = ose_readInt32(bundle, o1);
@@ -4039,7 +4039,7 @@ void be4(ose_bundle bundle,
          int32_t *on,
          int32_t *sn)
 {
-    int32_t s = ose_readInt32(bundle, -4);
+    int32_t s = ose_readSize(bundle);
     ose_assert(s > OSE_BUNDLE_HEADER_LEN);
     int32_t o1 = OSE_BUNDLE_HEADER_LEN;
     int32_t s1 = ose_readInt32(bundle, o1);

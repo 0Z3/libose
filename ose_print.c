@@ -447,7 +447,7 @@ int32_t ose_pprintFullBundle_impl(ose_constbundle bundle,
 			     const char * const name)
 {
 	int32_t o = OSE_BUNDLE_HEADER_LEN;
-	const int32_t s = ose_readInt32(bundle, -4);
+	const int32_t s = ose_readSize(bundle);
 	int32_t nn = 0;
 	if(name){
 		const int namelen = strlen(name);
@@ -473,7 +473,7 @@ void ose_pprintFullBundle(ose_constbundle src,
 			  const char * const name)
 {
 	int32_t o = ose_getLastBundleElemOffset(dest);
-	if(o < ose_readInt32(dest, -4)){
+	if(o < ose_readSize(dest)){
 		o += ose_readInt32(dest, o) + 4;
 	}
 	int32_t s = ose_readInt32(dest, o);

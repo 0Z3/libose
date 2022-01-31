@@ -80,6 +80,9 @@ debug: CFLAGS+=$(DEFINES) -Wall -DOSE_CONF_DEBUG -O0 -g$(DEBUG_SYMBOLS) -gmodule
 debug: LDFLAGS+=
 debug: $(STATIC_TARGET) $(DYNAMIC_TARGET)
 
+ose_util.o: ose_util.c ose_util.h
+	$(CC) $(CFLAGS) --std=c89 -c -o ose_util.o $(INCLUDES) -o $@ $<
+
 %.o: %.c %.h
 	$(CC) $(CFLAGS) $(INCLUDES) -o $@ $<
 

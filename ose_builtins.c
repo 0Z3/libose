@@ -402,7 +402,7 @@ void ose_builtin_apply(ose_bundle osevm)
                 char *sp = ose_getBundlePtr(vm_s);
                 char *ip = ose_getBundlePtr(vm_i);
                 int32_t stackoffset = OSE_BUNDLE_HEADER_LEN;
-                int32_t stacksize = ose_readInt32(vm_s, -4);
+                int32_t stacksize = ose_readSize(vm_s);
                 ose_assert(stackoffset < stacksize);
                 int32_t s = ose_readInt32(vm_s, stackoffset);
                 while(stackoffset + s + 4 < stacksize)
@@ -414,7 +414,7 @@ void ose_builtin_apply(ose_bundle osevm)
                 int32_t o1, o2;
                 o1 = stackoffset + 4 + OSE_BUNDLE_HEADER_LEN;
                 ose_incSize(vm_i, s - OSE_BUNDLE_HEADER_LEN);
-                o2 = ose_readInt32(vm_i, -4);
+                o2 = ose_readSize(vm_i);
                 int32_t end = o1 + s - OSE_BUNDLE_HEADER_LEN;;
                 while(o1 < end)
                 {
@@ -659,7 +659,7 @@ void ose_builtin_return(ose_bundle osevm)
     ose_incSize(vm_s, snm1 - OSE_BUNDLE_HEADER_LEN);
     memmove(sp + OSE_BUNDLE_HEADER_LEN + (snm1 - OSE_BUNDLE_HEADER_LEN),
             sp + OSE_BUNDLE_HEADER_LEN,
-            ose_readInt32(vm_s, -4) - OSE_BUNDLE_HEADER_LEN);
+            ose_readSize(vm_s) - OSE_BUNDLE_HEADER_LEN);
     memcpy(dp + onm1 + 4 + OSE_BUNDLE_HEADER_LEN,
            sp + OSE_BUNDLE_HEADER_LEN,
            snm1 - OSE_BUNDLE_HEADER_LEN);
@@ -712,7 +712,7 @@ void ose_builtin_assignStackToEnv(ose_bundle osevm)
 
     const char * const str = ose_peekString(vm_s);
     if(!strncmp(str, OSE_ADDRESS_ANONVAL, OSE_ADDRESS_ANONVAL_LEN)
-       && ose_readInt32(vm_e, -4) == OSE_BUNDLE_HEADER_LEN)
+       && ose_readSize(vm_e) == OSE_BUNDLE_HEADER_LEN)
     {
         /* if there's nothing in the env, and this is the empty
            string, rollMatch_impl will crash, because the string
