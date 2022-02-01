@@ -41,9 +41,9 @@ extern "C" {
  */
 
 #ifdef NDEBUG
-#define ose_assert(t, ...) do {} while(0)
+#define ose_assert(t) do {} while(0)
 #else
-#define ose_assert(t, ...)                              \
+#define ose_assert(t)                              \
 	!(t)                                                \
 	? ((void)fprintf(stderr,                            \
                      "Assertion failed: %s, "           \
@@ -51,27 +51,6 @@ extern "C" {
                      "file %s, "                        \
                      "line %d.\n",                      \
                      #t, __func__, __FILE__, __LINE__),	\
-	   fprintf(stderr,                                  \
-               "%s\n",                                  \
-               #__VA_ARGS__),                           \
-	   abort())                                         \
-	: (void)0
-#endif
-
-#ifdef NDEBUG
-#define ose_assertf(t, fmt, ...) do {} while(0)
-#else
-#define ose_assertf(t, fmt, ...)                        \
-	!(t)                                                \
-	? ((void)fprintf(stderr,                            \
-                     "Assertion failed: %s, "           \
-                     "function %s, "                    \
-                     "file %s, "                        \
-                     "line %d.\n",                      \
-                     #t, __func__, __FILE__, __LINE__),	\
-	   fprintf(stderr,                                  \
-               fmt,                                     \
-               ##__VA_ARGS__),                          \
 	   abort())                                         \
 	: (void)0
 #endif

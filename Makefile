@@ -22,7 +22,6 @@ endif
 
 CFILES=\
 ose.c\
-ose_assert.c\
 ose_builtins.c\
 ose_context.c\
 ose_match.c\
@@ -81,7 +80,10 @@ debug: LDFLAGS+=
 debug: $(STATIC_TARGET) $(DYNAMIC_TARGET)
 
 ose_util.o: ose_util.c ose_util.h
-	$(CC) $(CFLAGS) --std=c89 -c -o ose_util.o $(INCLUDES) -o $@ $<
+	$(CC) $(CFLAGS) -std=c89 -pedantic -c -o ose_util.o $(INCLUDES) -o $@ $<
+
+ose_context.o: ose_context.c ose_context.h
+	$(CC) $(CFLAGS) -std=c89 -pedantic -c -o ose_context.o $(INCLUDES) -o $@ $<
 
 %.o: %.c %.h
 	$(CC) $(CFLAGS) $(INCLUDES) -o $@ $<

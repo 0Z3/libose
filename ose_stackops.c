@@ -394,14 +394,22 @@ void ose_pushMessage(ose_bundle bundle,
     ose_assert(o >= OSE_BUNDLE_HEADER_LEN);
     va_list ap;
     va_start(ap, n);
-    ose_vwriteMessage(bundle,
-                      o,
-                      address,
-                      addresslen,
-                      n,
-                      ap);
+    int32_t ms = ose_vcomputeMessageSize(bundle,
+                                         address,
+                                         addresslen,
+                                         n,
+                                         ap);
     va_end(ap);
-    /* ose_incSize(bundle, s); */
+    ose_incSize(bundle, ms);
+    va_start(ap, n);
+    int32_t ms2 = ose_vwriteMessage(bundle,
+                                    o,
+                                    address,
+                                    addresslen,
+                                    n,
+                                    ap);
+    va_end(ap);
+    ose_assert(ms == ms2);
 }
 
 char *ose_peekAddress(const ose_bundle bundle)

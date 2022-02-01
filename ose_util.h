@@ -500,7 +500,11 @@ int32_t ose_writeMessage(ose_bundle bundle,
 
 
 
-
+int32_t ose_vcomputeMessageSize(ose_bundle bundle,
+                                const char * const address,
+                                const int32_t addresslen,
+                                const int32_t n,
+                                va_list ap);
 /**
    @brief see #ose_writeMessage.
 */
@@ -525,8 +529,8 @@ struct ose_SLIPBuf
 struct ose_SLIPBuf ose_initSLIPBuf(unsigned char *buf,
                                    int32_t buflen);
 int ose_SLIPDecode(unsigned char c, struct ose_SLIPBuf *s);
-// -1 error
-// >0 length
+/* -1 error */
+/* >0 length */
 int32_t ose_SLIPEncode(const unsigned char * const src,
                        int32_t srclen,
                        unsigned char *dest,

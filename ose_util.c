@@ -437,9 +437,11 @@ int32_t ose_writeFloat(ose_bundle bundle,
     ose_assert(ose_isBundle(bundle));
     ose_assert(offset >= 0);
     ose_assert(offset <= ose_readSize(bundle) - 4);
-    const char * const p = (char *)&f;
-    ose_writeInt32(bundle, offset, *((int32_t *)p));
-    return 4;
+    {
+        const char * const p = (char *)&f;
+        ose_writeInt32(bundle, offset, *((int32_t *)p));
+        return 4;
+    }
 }
 
 #ifdef OSE_DEBUG
@@ -618,27 +620,29 @@ int32_t ose_writeBlob(ose_bundle bundle,
     ose_assert(offset <= ose_readSize(bundle) -
                (blobsize + ose_getBlobPaddingForNBytes(blobsize) + 4));
     ose_assert(blob || !blob);
-    int32_t o = offset;
-    o += ose_writeInt32(bundle, o, blobsize);
-    if(blobsize == 0)
     {
-        return 4;
+        int32_t o = offset;
+        o += ose_writeInt32(bundle, o, blobsize);
+        if(blobsize == 0)
+        {
+            return 4;
+        }
+        if(blob)
+        {
+            memcpy(ose_getBundlePtr(bundle) + o, blob, blobsize);
+        }
+        else
+        {
+            memset(ose_getBundlePtr(bundle) + o, 0, blobsize);
+        }
+        o += blobsize;
+        while(o % 4)
+        {
+            ose_writeByte(bundle, o, 0);
+            o++;
+        }
+        return o - offset;
     }
-    if(blob)
-    {
-    	memcpy(ose_getBundlePtr(bundle) + o, blob, blobsize);
-    }
-    else
-    {
-        memset(ose_getBundlePtr(bundle) + o, 0, blobsize);
-    }
-    o += blobsize;
-    while(o % 4)
-    {
-        ose_writeByte(bundle, o, 0);
-        o++;
-    }
-    return o - offset;
 }
 
 #ifdef OSE_PROVIDE_TYPE_DOUBLE
@@ -798,17 +802,19 @@ int32_t ose_writeAlignedPtr(ose_bundle bundle,
     ose_assert(offset >= 0);
     ose_assert(OSE_INTPTR2 == sizeof(intptr_t) * 2);
     ose_assert(offset <= ose_readSize(bundle) - OSE_INTPTR2);
-    char *b = ose_getBundlePtr(bundle);
-    b += offset;
-    memset(b, 0, OSE_INTPTR2);
-    int32_t a = 0;
-    while((uintptr_t)(b + 4 + a) % sizeof(intptr_t))
     {
-        a++;
+        int32_t a = 0;
+        char *b = ose_getBundlePtr(bundle);
+        b += offset;
+        memset(b, 0, OSE_INTPTR2);
+        while((uintptr_t)(b + 4 + a) % sizeof(intptr_t))
+        {
+            a++;
+        }
+        *((int32_t *)b) = ose_htonl(a);
+        *((intptr_t *)(b + 4 + a)) = (intptr_t)ptr;
+        return OSE_INTPTR2;
     }
-    *((int32_t *)b) = ose_htonl(a);
-    *((intptr_t *)(b + 4 + a)) = (intptr_t)ptr;
-    return OSE_INTPTR2;
 }
 
 void ose_alignPtr(ose_bundle bundle, const int32_t offset)
@@ -839,24 +845,26 @@ int32_t ose_getLastBundleElemOffset(ose_constbundle bundle)
     ose_assert(ose_getBundlePtr(bundle));
     ose_assert(ose_isBundle(bundle));
     ose_assert(ose_readSize(bundle) >= OSE_BUNDLE_HEADER_LEN);
-    const int32_t bs = ose_readSize(bundle);
-    if(bs == OSE_BUNDLE_HEADER_LEN)
     {
-        return OSE_BUNDLE_HEADER_LEN;
-    }
-    {
-        int32_t o = OSE_BUNDLE_HEADER_LEN;
-        int32_t s = ose_readInt32(bundle, o);
-        ose_assert(s >= 0);
-        ose_assert(o + s + 4 <= bs);
-        while(o + s + 4 < bs)
+        const int32_t bs = ose_readSize(bundle);
+        if(bs == OSE_BUNDLE_HEADER_LEN)
         {
-            o += s + 4;
-            s = ose_readInt32(bundle, o);
+            return OSE_BUNDLE_HEADER_LEN;
+        }
+        {
+            int32_t o = OSE_BUNDLE_HEADER_LEN;
+            int32_t s = ose_readInt32(bundle, o);
             ose_assert(s >= 0);
             ose_assert(o + s + 4 <= bs);
+            while(o + s + 4 < bs)
+            {
+                o += s + 4;
+                s = ose_readInt32(bundle, o);
+                ose_assert(s >= 0);
+                ose_assert(o + s + 4 <= bs);
+            }
+            return o;
         }
-        return o;
     }
 }
 
@@ -992,7 +1000,8 @@ int32_t ose_getFirstOffsetForFullPMatch(ose_constbundle bundle,
     }
 }
 
-int32_t ose_getTypedDatumSize(const char typetag, const char * const ptr)
+int32_t ose_getTypedDatumSize(const char typetag,
+                              const char * const ptr)
 {
     ose_assert(ose_isKnownTypetag(typetag));
     switch(typetag)
@@ -1030,8 +1039,8 @@ int32_t ose_getTypedDatumSize(const char typetag, const char * const ptr)
         ose_assert(ptr);
         return ose_pstrlen(ptr);
     case OSETT_BLOB:
-    {
         ose_assert(ptr);
+    {
         int32_t s = ose_ntohl(*((int32_t *)ptr));
         while(s % 4)
         {
@@ -1064,17 +1073,14 @@ int32_t ose_getPayloadItemSize(ose_constbundle bundle,
                                const char typetag,
                                const int32_t payload_offset)
 {
+    ose_assert(ose_getBundlePtr(bundle));
     ose_assert(ose_isBundle(bundle));
+    ose_assert(ose_isKnownTypetag(typetag));
     ose_assert(payload_offset >= OSE_BUNDLE_HEADER_LEN);
-    const int32_t bs = ose_readSize(bundle);(void)bs;
-    ose_assert(payload_offset < bs);
-    const char * const b = ose_getBundlePtr(bundle);
-    /* a NULL pointer is fine to pass to ose_getTypedDatumSize, */
-    /* but here, we have to add an offset, so b has to not be NULL */
-    ose_assert(b);
-    const int32_t s = ose_getTypedDatumSize(typetag,
-                                            b + payload_offset);
-    return s;
+    ose_assert(payload_offset < ose_readSize(bundle));
+    return ose_getTypedDatumSize(typetag,
+                                 ose_getBundlePtr(bundle)
+                                 + payload_offset);
 }
 
 int32_t ose_getTypedDatumLength(const char typetag,
@@ -1116,8 +1122,8 @@ int32_t ose_getTypedDatumLength(const char typetag,
         ose_assert(ptr);
         return strlen(ptr);
     case OSETT_BLOB:
-    {
         ose_assert(ptr);
+    {
         const int32_t s = ose_ntohl(*((int32_t *)ptr));
         return s;
     }
@@ -1146,17 +1152,14 @@ int32_t ose_getPayloadItemLength(ose_constbundle bundle,
                                  const char typetag,
                                  const int32_t payload_offset)
 {
+    ose_assert(ose_getBundlePtr(bundle));
     ose_assert(ose_isBundle(bundle));
+    ose_assert(ose_isKnownTypetag(typetag));
     ose_assert(payload_offset >= OSE_BUNDLE_HEADER_LEN);
-    const int32_t bs = ose_readSize(bundle);(void)bs;
-    ose_assert(payload_offset < bs);
-    const char * const b = ose_getBundlePtr(bundle);
-    /* a NULL pointer is fine to pass to ose_getTypedDatumSize, */
-    /* but here, we have to add an offset, so b has to not be NULL */
-    ose_assert(b);
-    const int32_t s = ose_getTypedDatumLength(typetag,
-                                              b + payload_offset);
-    return s;
+    ose_assert(payload_offset < ose_readSize(bundle));
+    return ose_getTypedDatumLength(typetag,
+                                 ose_getBundlePtr(bundle)
+                                 + payload_offset);
 }
 
 /* n = 1 => rightmost item */
@@ -1169,35 +1172,106 @@ void ose_getNthPayloadItem(ose_constbundle bundle,
                            int32_t *_po,
                            int32_t *_lpo)
 {
+    int32_t to, ntt, po, i;
+    ose_assert(ose_getBundlePtr(bundle));
     ose_assert(ose_isBundle(bundle));
     ose_assert(n > 0);
     ose_assert(o >= OSE_BUNDLE_HEADER_LEN);
-    const int32_t bundlesize = ose_readSize(bundle);
-    (void)bundlesize;
-    ose_assert(bundlesize >= OSE_BUNDLE_HEADER_LEN);
-    const int32_t elemsize = ose_readInt32(bundle, o);(void)elemsize;
-    ose_assert(elemsize >= 0);
-    ose_assert(elemsize + 4 <= bundlesize - OSE_BUNDLE_HEADER_LEN);
-    int32_t to = o + 4 + ose_getPaddedStringLen(bundle, o + 4);
-    ose_assert(to - o <= elemsize);
-    const int32_t ntt = ose_getStringLen(bundle, to);
-    ose_assert(ntt >= n);
-    int32_t po = to + ose_pnbytes(ntt);
-    ose_assert(po - o <= elemsize);
+    ose_assert(ose_readSize(bundle) > OSE_BUNDLE_HEADER_LEN);
+    ose_assert(ose_readInt32(bundle, o) > 0);
+    ose_assert(ose_readInt32(bundle, o) + 4 <= ose_readSize(bundle));
+    to = o + 4 + ose_getPaddedStringLen(bundle, o + 4);
+    ose_assert(to - o <= ose_readInt32(bundle, o));
+
+    /* first typetag is the typetag id ',' */
+    ntt = ose_getStringLen(bundle, to);
+    ose_assert(ntt > n);
+
+    po = to + ose_pnbytes(ntt);
+    ose_assert(po - o <= ose_readInt32(bundle, o));
+    
     *_to = to;
     *_po = po;
     *_ntt = ntt;
-    for(int i = 0; i < ntt - n; i++)
+    for(i = 0; i < ntt - n; i++)
     {
         const char c = ose_readByte(bundle, to);
-        const int32_t s = ose_getPayloadItemSize(bundle, c, po);
-        po += s;
-        to++;
+        ose_assert(ose_isKnownTypetag(c));
+        {
+            const int32_t s = ose_getPayloadItemSize(bundle, c, po);
+            ose_assert(s >= 0);
+            po += s;
+            to++;
+            ose_assert(po - (o + 4) < ose_readInt32(bundle, o));
+            ose_assert(to < po);
+        }
     }
-    ose_assert(to < o + bundlesize);
-    ose_assert(po < o + bundlesize);
+    ose_assert(to < o + ose_readSize(bundle));
+    ose_assert(po < o + ose_readSize(bundle));
     *_lto = to;
     *_lpo = po;
+}
+
+int32_t ose_vcomputeMessageSize(ose_bundle bundle,
+                                const char * const address,
+                                const int32_t addresslen,
+                                const int32_t n,
+                                va_list ap)
+{
+    ose_assert(ose_getBundlePtr(bundle));
+    ose_assert(ose_isBundle(bundle));
+    ose_assert(address);
+    ose_assert(addresslen >= 0);
+    ose_assert(n >= 0);
+    {
+        const int32_t alenp = ose_pnbytes(addresslen);
+        int32_t i;
+        char tt;
+        int32_t newmsg_size = alenp;
+        int32_t newmsg_numtypetags = 1;
+        ose_assert(alenp >= OSE_ADDRESS_MIN_PLEN);
+
+        for(i = 0; i < n; i++)
+        {
+            tt = va_arg(ap, int);
+            ++newmsg_numtypetags;
+            switch(tt)
+            {
+            case OSETT_INT32:
+                newmsg_size += 4;
+                va_arg(ap, int32_t);
+                break;
+            case OSETT_FLOAT:
+                newmsg_size += 4;
+                va_arg(ap, double);
+                break;
+            case OSETT_STRING:
+            {
+                const char * const p = va_arg(ap, char*);
+                ose_assert(p);
+                newmsg_size += ose_pstrlen(p);
+            }
+            break;
+            case OSETT_BLOB:
+            {
+                /* no need for assertions;
+                   blobs can be 0 size and NULL pointers */
+                const int32_t s = va_arg(ap, int32_t);
+                newmsg_size += 4 + s + ose_getBlobPaddingForNBytes(s);
+                va_arg(ap, char*);
+            }
+            break;
+            case OSETT_ALIGNEDPTR:
+                va_arg(ap, ose_fn);
+                newmsg_size += OSE_INTPTR2 + 4;
+                break;
+            default:
+                ose_assert(0 && "unknown typetag");
+            }
+        }
+        newmsg_size += ose_pnbytes(newmsg_numtypetags);
+        return newmsg_size + 4;
+    }
 }
 
 int32_t ose_vwriteMessage(ose_bundle bundle,
@@ -1221,57 +1295,7 @@ int32_t ose_vwriteMessage(ose_bundle bundle,
         int32_t plo = _plo;
         int32_t s, i;
         char tt;
-        int32_t newmsg_size = alenp;
-        int32_t newmsg_numtypetags = 1;
-        va_list ap_copy;
-        va_copy(ap_copy, ap);
         ose_assert(alenp >= OSE_ADDRESS_MIN_PLEN);
-
-        /* verify that we can handle all the typetags, and that
-           everything we get in the va_list is sane before we make
-           any changes */
-        for(i = 0; i < n; i++)
-        {
-            tt = va_arg(ap_copy, int);
-            ++newmsg_numtypetags;
-            switch(tt)
-            {
-            case OSETT_INT32:
-                newmsg_size += 4;
-                va_arg(ap_copy, int32_t);
-                break;
-            case OSETT_FLOAT:
-                newmsg_size += 4;
-                va_arg(ap_copy, double);
-                break;
-            case OSETT_STRING:
-            {
-                const char * const p = va_arg(ap_copy, char*);
-                ose_assert(p);
-                newmsg_size += ose_pstrlen(p);
-            }
-            break;
-            case OSETT_BLOB:
-            {
-                /* no need for assertions;
-                   blobs can be 0 size and NULL pointers */
-                const int32_t s = va_arg(ap_copy, int32_t);
-                newmsg_size += 4 + s + ose_getBlobPaddingForNBytes(s);
-                va_arg(ap_copy, char*);
-            }
-            break;
-            case OSETT_ALIGNEDPTR:
-                va_arg(ap_copy, ose_fn);
-                newmsg_size += OSE_INTPTR2 + 4;
-                break;
-            default:
-                ose_assert(0 && "unknown typetag");
-            }
-        }
-        va_end(ap_copy);
-
-        newmsg_size += ose_pnbytes(newmsg_numtypetags);
-        ose_incSize(bundle, newmsg_size + 4);
         
         ose_writeString(bundle, o + 4, address, addresslen, alenp);
         ose_writeByte(bundle, tto++, OSETT_ID);
@@ -1319,11 +1343,13 @@ int32_t ose_vwriteMessage(ose_bundle bundle,
                 const int32_t len = va_arg(ap, int);
                 const char * const blob = va_arg(ap, char*);
                 ose_writeByte(bundle, tto++, tt);
-                const int32_t wlen = ose_writeBlob(bundle,
-                                                   plo,
-                                                   len,
-                                                   blob);
-                plo += wlen;
+                {
+                    const int32_t wlen = ose_writeBlob(bundle,
+                                                       plo,
+                                                       len,
+                                                       blob);
+                    plo += wlen;
+                }
                 break;
             }
 #ifdef OSE_PROVIDE_TYPE_SYMBOL
@@ -1454,25 +1480,48 @@ int32_t ose_writeMessage(ose_bundle bundle,
                          const int32_t n, ...)
 {
     va_list ap;
-    va_start(ap, n);
-    int32_t len = ose_vwriteMessage(bundle,
-                                    offset,
-                                    address,
-                                    addresslen,
-                                    n,
-                                    ap);
+    /* va_start(ap, n); */
+    /* int32_t len = ose_vwriteMessage(bundle, */
+    /*                                 offset, */
+    /*                                 address, */
+    /*                                 addresslen, */
+    /*                                 n, */
+    /*                                 ap); */
+    /* va_end(ap); */
+    /* return len; */
+    int32_t ms = ose_vcomputeMessageSize(bundle,
+                                         address,
+                                         addresslen,
+                                         n,
+                                         ap);
+    int32_t ms2 = 0;
     va_end(ap);
-    return len;
+    ose_incSize(bundle, ms);
+    va_start(ap, n);
+    ms2 = ose_vwriteMessage(bundle,
+                            offset,
+                            address,
+                            addresslen,
+                            n,
+                            ap);
+    va_end(ap);
+    ose_assert(ms == ms2);
+    return ms;
 }
 
 struct ose_SLIPBuf ose_initSLIPBuf(unsigned char *buf,
                                    int32_t buflen)
 {
-    memset(buf, 0, buflen);
-    return (struct ose_SLIPBuf)
-        {
-            buf, buflen, 0, 0
-        };
+    ose_assert(buf);
+    ose_assert(buflen);
+    {
+        struct ose_SLIPBuf sb;
+        memset(buf, 0, buflen);
+        sb.buf = buf;
+        sb.buflen = buflen;
+        sb.count = sb.state = 0;
+        return sb;
+    }
 }
 
 int ose_SLIPDecode(unsigned char c, struct ose_SLIPBuf *s)
@@ -1486,7 +1535,7 @@ int ose_SLIPDecode(unsigned char c, struct ose_SLIPBuf *s)
         {
             break;
         }
-        // fall through
+        /* fall through */
     case 1:
         switch(c)
         {
@@ -1496,11 +1545,11 @@ int ose_SLIPDecode(unsigned char c, struct ose_SLIPBuf *s)
                 s->state = 0;
                 if(s->count % 4 == 0)
                 {
-                    return 0; // done
+                    return 0; /* done */
                 }
                 else
                 {
-                    return -1; // error
+                    return -1; /* error */
                 }
             }
             s->state = 0;
@@ -1512,7 +1561,7 @@ int ose_SLIPDecode(unsigned char c, struct ose_SLIPBuf *s)
         case 13:
             if(s->havenullbyte == 0)
             {
-                //s->buf[s->count++] = c;
+                /* s->buf[s->count++] = c; */
                 s->count++;
                 while(s->count % 4)
                 {
@@ -1524,7 +1573,7 @@ int ose_SLIPDecode(unsigned char c, struct ose_SLIPBuf *s)
             }
             else
             {
-                // fall through
+                /* fall through */
             }
         case 0:
             s->havenullbyte = 1;
@@ -1580,19 +1629,19 @@ int ose_SLIPDecode(unsigned char c, struct ose_SLIPBuf *s)
     return 1;
 }
 
-// -1 error
-// >0 length
+/* -1 error */
+/* >0 length */
 int32_t ose_SLIPEncode(const unsigned char * const src,
                        int32_t srclen,
                        unsigned char *dest,
                        int32_t destlen)
 {
+    int32_t j = 0, i = 0;
     if(!dest)
     {
         return -1;
     }
-    int32_t j = 0;
-    for(int32_t i = 0; i < srclen; i++)
+    for( ; i < srclen; i++)
     {
         switch(src[i])
         {
