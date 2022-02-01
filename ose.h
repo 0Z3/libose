@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2019-21 John MacCallum Permission is hereby granted,
+  Copyright (c) 2019-22 John MacCallum Permission is hereby granted,
   free of charge, to any person obtaining a copy of this software
   and associated documentation files (the "Software"), to deal in
   the Software without restriction, including without limitation the
@@ -31,6 +31,11 @@
 
 #ifdef __cplusplus
 extern "C" {
+#endif
+
+#include <limits.h>
+#if CHAR_BIT != 8
+#error "Unsupported hardware (CHAR_BIT != 8)"
 #endif
 
 #include <inttypes.h>

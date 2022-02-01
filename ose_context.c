@@ -138,7 +138,7 @@ int32_t ose_pushContextMessage(ose_bundle bundle,
                                + size);
     bs1 = ose_readSize(bundle);
     bs2 -= size;
-    ose_writeInt32(bundle, bs1, bs2);
+    ose_writeInt32_outOfBounds(bundle, bs1, bs2);
     return fs;
 }
 
@@ -206,10 +206,10 @@ void ose_addToSize(ose_bundle bundle, int32_t amt)
     ose_assert(ns2 >= 0);
     if(amt < 0)
     {
-        ose_writeInt32(bundle, os, 0);
+        ose_writeInt32_outOfBounds(bundle, os, 0);
     }
-    ose_writeInt32(bundle, -4, ns1);
-    ose_writeInt32(bundle, ns1, ns2);
+    ose_writeInt32_outOfBounds(bundle, -4, ns1);
+    ose_writeInt32_outOfBounds(bundle, ns1, ns2);
     ose_assert(ose_readSize(bundle) >= OSE_BUNDLE_HEADER_LEN);
     ose_assert(ose_readInt32_outOfBounds(bundle, ose_readSize(bundle)) >= 0);
 }
@@ -226,8 +226,8 @@ void ose_incSize(ose_bundle bundle, int32_t amt)
         ose_readInt32_outOfBounds(bundle,
                                   OSE_CONTEXT_TOTAL_SIZE_OFFSET) - ns1;
     ose_assert(ns2 >= 0);
-    ose_writeInt32(bundle, -4, ns1);
-    ose_writeInt32(bundle, ns1, ns2);
+    ose_writeInt32_outOfBounds(bundle, -4, ns1);
+    ose_writeInt32_outOfBounds(bundle, ns1, ns2);
     ose_assert(ose_readSize(bundle) >= OSE_BUNDLE_HEADER_LEN);
     ose_assert(ose_readInt32_outOfBounds(bundle, ose_readSize(bundle)) >= 0);
 }
@@ -244,9 +244,9 @@ void ose_decSize(ose_bundle bundle, int32_t amt)
         ose_readInt32_outOfBounds(bundle,
                                   OSE_CONTEXT_TOTAL_SIZE_OFFSET) - ns1;
     ose_assert(ns2 >= 0);
-    ose_writeInt32(bundle, os, 0);
-    ose_writeInt32(bundle, -4, ns1);
-    ose_writeInt32(bundle, ns1, ns2);
+    ose_writeInt32_outOfBounds(bundle, os, 0);
+    ose_writeInt32_outOfBounds(bundle, -4, ns1);
+    ose_writeInt32_outOfBounds(bundle, ns1, ns2);
     ose_assert(ose_readSize(bundle) >= OSE_BUNDLE_HEADER_LEN);
     ose_assert(ose_readInt32_outOfBounds(bundle, ose_readSize(bundle)) >= 0);
 }

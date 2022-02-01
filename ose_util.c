@@ -381,12 +381,14 @@ int32_t ose_writeByte(ose_bundle bundle,
                       const int32_t offset,
                       const char i)
 {
-    char *b = ose_getBundlePtr(bundle);
-    ose_assert(b);
-    b += offset;
-    *b = i;
+    ose_assert(ose_getBundlePtr(bundle));
+    ose_assert(ose_isBundle(bundle));
+    ose_assert(offset >= 0);
+    ose_assert(offset < ose_readSize(bundle));
+    ose_getBundlePtr(bundle)[offset] = i;
     return 1;
 }
+
 #endif
 
 #ifdef OSE_DEBUG
@@ -401,12 +403,15 @@ int32_t ose_readInt32(ose_constbundle bundle, const int32_t offset)
 #endif
 
 #ifdef OSE_DEBUG
-int32_t ose_writeInt32(ose_bundle bundle, const int32_t offset, const int32_t i)
+int32_t ose_writeInt32(ose_bundle bundle,
+                       const int32_t offset,
+                       const int32_t i)
 {
-    const char *b = ose_getBundlePtr(bundle);
-    ose_assert(b);
-    b += offset;
-    *((int32_t *)b) = ose_htonl(i);
+    ose_assert(ose_getBundlePtr(bundle));
+    ose_assert(ose_isBundle(bundle));
+    ose_assert(offset >= 0);
+    ose_assert(offset <= ose_readSize(bundle) - 4);
+    *((int32_t *)(ose_getBundlePtr(bundle) + offset)) = ose_htonl(i);
     return 4;
 }
 #endif
@@ -416,7 +421,7 @@ float ose_readFloat(ose_constbundle bundle, const int32_t offset)
     ose_assert(ose_getBundlePtr(bundle));
     ose_assert(ose_isBundle(bundle));
     ose_assert(offset >= 0);
-    ose_assert(offset < ose_readSize(bundle) - 4);
+    ose_assert(offset <= ose_readSize(bundle) - 4);
     {
     	const int32_t i = ose_readInt32(bundle, offset);
         const char * const p = (char *)&i;
@@ -424,8 +429,14 @@ float ose_readFloat(ose_constbundle bundle, const int32_t offset)
     }
 }
 
-int32_t ose_writeFloat(ose_bundle bundle, const int32_t offset, const float f)
+int32_t ose_writeFloat(ose_bundle bundle,
+                       const int32_t offset,
+                       const float f)
 {
+    ose_assert(ose_getBundlePtr(bundle));
+    ose_assert(ose_isBundle(bundle));
+    ose_assert(offset >= 0);
+    ose_assert(offset <= ose_readSize(bundle) - 4);
     const char * const p = (char *)&f;
     ose_writeInt32(bundle, offset, *((int32_t *)p));
     return 4;
@@ -500,19 +511,23 @@ int32_t ose_writeString(ose_bundle bundle,
                         const int32_t len,
                         const int32_t plen)
 {
-    char *b = ose_getBundlePtr(bundle);
-    ose_assert(b);
-    b += offset;
+    
+    ose_assert(ose_getBundlePtr(bundle));
+    ose_assert(ose_isBundle(bundle));
+    ose_assert(offset >= 0);
+    ose_assert(offset <= ose_readSize(bundle) - plen);
     ose_assert(s);
     ose_assert(len >= 0);
-    ose_assert(plen >= 0);
     ose_assert(plen > len);
-    memcpy(b, s, len);
-    for(int i = 0; i < plen - len; i++)
+    memcpy(ose_getBundlePtr(bundle) + offset, s, len);
     {
-        b[len + i] = 0;
+        int32_t i;
+        for(i = 0; i < plen - len; i++)
+        {
+            ose_writeByte(bundle, offset + len + i, 0);
+        }
+        return plen;
     }
-    return plen;
 }
 #endif
 
@@ -596,28 +611,31 @@ int32_t ose_writeBlob(ose_bundle bundle,
                       const int32_t blobsize,
                       const char * const blob)
 {
+    ose_assert(ose_getBundlePtr(bundle));
+    ose_assert(ose_isBundle(bundle));
+    ose_assert(offset >= 0);
     ose_assert(blobsize >= 0);
-    char * const b = ose_getBundlePtr(bundle);
-    ose_assert(b);
+    ose_assert(offset <= ose_readSize(bundle) -
+               (blobsize + ose_getBlobPaddingForNBytes(blobsize) + 4));
+    ose_assert(blob || !blob);
     int32_t o = offset;
     o += ose_writeInt32(bundle, o, blobsize);
     if(blobsize == 0)
     {
         return 4;
     }
-    //ose_assert(blob);
     if(blob)
     {
-    	memcpy(b + o, blob, blobsize);
+    	memcpy(ose_getBundlePtr(bundle) + o, blob, blobsize);
     }
     else
     {
-        memset(b + o, 0, blobsize);
+        memset(ose_getBundlePtr(bundle) + o, 0, blobsize);
     }
     o += blobsize;
     while(o % 4)
     {
-        b[o] = 0;
+        ose_writeByte(bundle, o, 0);
         o++;
     }
     return o - offset;
@@ -639,8 +657,11 @@ int32_t ose_writeDouble(ose_bundle bundle,
                         const int32_t offset,
                         const double f)
 {
+    ose_assert(ose_getBundlePtr(bundle));
     ose_assert(ose_isBundle(bundle));
-    const char * const b = ose_getBundlePtr(bundle) + offset;
+    ose_assert(offset >= 0);
+    ose_assert(offset <= ose_readSize(bundle) - 8);
+    char *b = ose_getBundlePtr(bundle) + offset;
     const int64_t i = *((int64_t *)&f);
     *((int64_t *)b) = ose_htonll(i);
     return 8;
@@ -661,8 +682,12 @@ int32_t ose_writeUInt32(ose_bundle bundle,
                         const int32_t offset,
                         const uint32_t i)
 {
-    const char * const b = ose_getBundlePtr(bundle) + offset;
-    return ose_writeInt32(bundle, offset, *((int32_t *)&i));
+    ose_assert(ose_getBundlePtr(bundle));
+    ose_assert(ose_isBundle(bundle));
+    ose_assert(offset >= 0);
+    ose_assert(offset <= ose_readSize(bundle) - 4);
+    *((uint32_t *)(ose_getBundlePtr(bundle) + offset)) = ose_htonl(i);
+    return 4;
 }
 #endif
 
@@ -680,9 +705,11 @@ int32_t ose_writeInt64(ose_bundle bundle,
                        const int32_t offset,
                        const int64_t i)
 {
+    ose_assert(ose_getBundlePtr(bundle));
     ose_assert(ose_isBundle(bundle));
-    const char * const b = ose_getBundlePtr(bundle) + offset;
-    *((int64_t *)b) = ose_htonll(i);
+    ose_assert(offset >= 0);
+    ose_assert(offset <= ose_readSize(bundle) - 8);
+    *((int64_t *)(ose_getBundlePtr(bundle) + offset)) = ose_htonl(i);
     return 8;
 }
 #endif
@@ -702,9 +729,11 @@ int32_t ose_writeUInt64(ose_bundle bundle,
                         const int32_t offset,
                         const uint64_t i)
 {
+    ose_assert(ose_getBundlePtr(bundle));
     ose_assert(ose_isBundle(bundle));
-    const char * const b = ose_getBundlePtr(bundle) + offset;
-    *((uint64_t *)b) = ose_htonll(i);
+    ose_assert(offset >= 0);
+    ose_assert(offset <= ose_readSize(bundle) - 8);
+    *((uint64_t *)(ose_getBundlePtr(bundle) + offset)) = ose_htonl(i);
     return 8;
 }
 #endif
@@ -733,8 +762,11 @@ int32_t ose_writeTimetag(ose_bundle bundle,
                          const uint32_t sec,
                          const uint32_t fsec)
 {
+    ose_assert(ose_getBundlePtr(bundle));
     ose_assert(ose_isBundle(bundle));
-    const char * const b = ose_getBundlePtr(bundle) + offset;
+    ose_assert(offset >= 0);
+    ose_assert(offset <= ose_readSize(bundle) - 8);
+    char *b = ose_getBundlePtr(bundle) + offset;
     *((uint32_t *)b) = ose_htonl(sec);
     *((uint32_t *)(b + 4)) = ose_htonl(fsec);
     return 8;
@@ -761,8 +793,12 @@ int32_t ose_writeAlignedPtr(ose_bundle bundle,
                             const int32_t offset,
                             const void *ptr)
 {
+    ose_assert(ose_getBundlePtr(bundle));
+    ose_assert(ose_isBundle(bundle));
+    ose_assert(offset >= 0);
+    ose_assert(OSE_INTPTR2 == sizeof(intptr_t) * 2);
+    ose_assert(offset <= ose_readSize(bundle) - OSE_INTPTR2);
     char *b = ose_getBundlePtr(bundle);
-    ose_assert(b);
     b += offset;
     memset(b, 0, OSE_INTPTR2);
     int32_t a = 0;
@@ -1137,190 +1173,244 @@ int32_t ose_vwriteMessage(ose_bundle bundle,
                           const int32_t n,
                           va_list ap)
 {
+    ose_assert(ose_getBundlePtr(bundle));
     ose_assert(ose_isBundle(bundle));
     ose_assert(address);
     ose_assert(addresslen >= 0);
     ose_assert(n >= 0);
-    const int32_t o = offset;
-    const int32_t alenp = ose_pnbytes(addresslen);
-    ose_assert(alenp >= OSE_ADDRESS_MIN_PLEN);
-    const int32_t _tto = o + 4 + alenp;
-    const int32_t _plo = _tto + ose_pnbytes(n + 1);
-    int32_t tto = _tto;
-    int32_t plo = _plo;
-
-    ose_writeString(bundle, o + 4, address, addresslen, alenp);
-    ose_writeByte(bundle, tto++, OSETT_ID);
-
-    int32_t s;
-    if(!n)
     {
+        const int32_t o = offset;
+        const int32_t alenp = ose_pnbytes(addresslen);
+        const int32_t _tto = o + 4 + alenp;
+        const int32_t _plo = _tto + ose_pnbytes(n + 1);
+        int32_t tto = _tto;
+        int32_t plo = _plo;
+        int32_t s, i;
+        char tt;
+        int32_t newmsg_size = alenp;
+        int32_t newmsg_numtypetags = 1;
+        va_list ap_copy;
+        va_copy(ap_copy, ap);
+        ose_assert(alenp >= OSE_ADDRESS_MIN_PLEN);
+
+        /* verify that we can handle all the typetags, and that
+           everything we get in the va_list is sane before we make
+           any changes */
+        for(i = 0; i < n; i++)
+        {
+            tt = va_arg(ap_copy, int);
+            ++newmsg_numtypetags;
+            switch(tt)
+            {
+            case OSETT_INT32:
+                newmsg_size += 4;
+                va_arg(ap_copy, int32_t);
+                break;
+            case OSETT_FLOAT:
+                newmsg_size += 4;
+                va_arg(ap_copy, double);
+                break;
+            case OSETT_STRING:
+            {
+                const char * const p = va_arg(ap_copy, char*);
+                ose_assert(p);
+                newmsg_size += ose_pstrlen(p);
+            }
+            break;
+            case OSETT_BLOB:
+            {
+                /* no need for assertions;
+                   blobs can be 0 size and NULL pointers */
+                const int32_t s = va_arg(ap_copy, int32_t);
+                newmsg_size += 4 + s + ose_getBlobPaddingForNBytes(s);
+                va_arg(ap_copy, char*);
+            }
+            break;
+            case OSETT_ALIGNEDPTR:
+                va_arg(ap_copy, ose_fn);
+                newmsg_size += OSE_INTPTR2 + 4;
+                break;
+            default:
+                ose_assert(0 && "unknown typetag");
+            }
+        }
+        va_end(ap_copy);
+
+        newmsg_size += ose_pnbytes(newmsg_numtypetags);
+        ose_incSize(bundle, newmsg_size + 4);
+        
+        ose_writeString(bundle, o + 4, address, addresslen, alenp);
+        ose_writeByte(bundle, tto++, OSETT_ID);
+
+        if(!n)
+        {
+            s = plo - o;
+            ose_writeInt32(bundle, o, s - 4);
+            return s;
+        }
+    
+        for(i = 0; i < n; i++)
+        {
+            tt = va_arg(ap, int);
+            switch(tt)
+            {
+            case OSETT_INT32:
+            {
+                const int32_t v = va_arg(ap, int32_t);
+                ose_writeByte(bundle, tto++, OSETT_INT32);
+                plo += ose_writeInt32(bundle, plo, v);
+                break;
+            }
+            case OSETT_FLOAT:
+            {
+                const float v = va_arg(ap, double);
+                ose_writeByte(bundle, tto++, OSETT_FLOAT);
+                plo += ose_writeFloat(bundle, plo, v);
+                break;
+            }
+            case OSETT_STRING:
+            {
+                const char * const v = va_arg(ap, char*);
+                {
+                    const int32_t sl = strlen(v);
+                    const int32_t psl = ose_pnbytes(sl);
+                    ose_writeByte(bundle, tto++, OSETT_STRING);
+                    plo += ose_writeString(bundle, plo, v, sl, psl);
+                }
+                break;
+            }
+            default:
+            case OSETT_BLOB:
+            {
+                const int32_t len = va_arg(ap, int);
+                const char * const blob = va_arg(ap, char*);
+                ose_writeByte(bundle, tto++, tt);
+                const int32_t wlen = ose_writeBlob(bundle,
+                                                   plo,
+                                                   len,
+                                                   blob);
+                plo += wlen;
+                break;
+            }
+#ifdef OSE_PROVIDE_TYPE_SYMBOL
+            case OSETT_SYMBOL:
+            {
+                const char * const v = va_arg(ap, char*);
+                ose_assert(v);
+                const int32_t sl = strlen(v);
+                const int32_t psl = ose_pnbytes(sl);
+                ose_writeByte(bundle, tto++, OSETT_STRING);
+                plo += ose_writeString(bundle, plo, v, sl, psl);
+                break;
+            }
+#endif
+#ifdef OSE_PROVIDE_TYPE_DOUBLE
+            case OSETT_DOUBLE:
+            {
+                const double v = va_arg(ap, double);
+                ose_writeByte(bundle, tto++, OSETT_DOUBLE);
+                plo += ose_writeDouble(bundle, plo, v);
+                break;
+            }
+#endif
+#ifdef OSE_PROVIDE_TYPE_INT8
+            case OSETT_INT8:
+            {
+                const int v = va_arg(ap, int);
+                ose_writeByte(bundle, tto++, OSETT_INT8);
+                plo += ose_writeInt8(bundle, plo, v);
+                break;
+            }
+#endif
+#ifdef OSE_PROVIDE_TYPE_UINT8
+            case OSETT_UINT8:
+            {
+                const int v = va_arg(ap, int);
+                ose_writeByte(bundle, tto++, OSETT_UINT8);
+                plo += ose_writeUInt8(bundle, plo, v);
+                break;
+            }
+#endif
+#ifdef OSE_PROVIDE_TYPE_UINT32
+            case OSETT_UINT32:
+            {
+                const uint32_t v = va_arg(ap, uint32_t);
+                ose_writeByte(bundle, tto++, OSETT_UINT32);
+                plo += ose_writeUInt32(bundle, plo, v);
+                break;
+            }
+#endif
+#ifdef OSE_PROVIDE_TYPE_INT64
+            case OSETT_INT64:
+            {
+                const int64_t v = va_arg(ap, int64_t);
+                ose_writeByte(bundle, tto++, OSETT_INT64);
+                plo += ose_writeInt64(bundle, plo, v);
+                break;
+            }
+#endif
+#ifdef OSE_PROVIDE_TYPE_UINT64
+            case OSETT_UINT64:
+            {
+                const uint64_t v = va_arg(ap, uint64_t);
+                ose_writeByte(bundle, tto++, OSETT_UINT64);
+                plo += ose_writeUInt64(bundle, plo, v);
+                break;
+            }
+#endif
+#ifdef OSE_PROVIDE_TYPE_TIMETAG
+            case OSETT_TIMETAG:
+            {
+                const int32_t sec = va_arg(ap, int32_t);
+                const int32_t fsec = va_arg(ap, int32_t);
+                ose_writeByte(bundle, tto++, OSETT_TIMETAG);
+                plo += ose_writeTimetag(bundle, plo, sec, fsec);
+                break;
+            }
+#endif
+#ifdef OSE_PROVIDE_TYPE_TRUE
+            case OSETT_TRUE:
+            {
+                ose_writeByte(bundle, tto++, OSETT_TRUE);
+                break;
+            }
+#endif
+#ifdef OSE_PROVIDE_TYPE_FALSE
+            case OSETT_FALSE:
+            {
+                ose_writeByte(bundle, tto++, OSETT_FALSE);
+                break;
+            }
+#endif
+#ifdef OSE_PROVIDE_TYPE_NULL
+            case OSETT_NULL:
+            {
+                ose_writeByte(bundle, tto++, OSETT_NULL);
+                break;
+            }
+#endif
+#ifdef OSE_PROVIDE_TYPE_INFINITUM
+            case OSETT_INFINITUM:
+            {
+                ose_writeByte(bundle, tto++, OSETT_INFINITUM);
+                break;
+            }
+#endif
+            case OSETT_ALIGNEDPTR:
+            {
+                const ose_fn fn = va_arg(ap, ose_fn);
+                ose_writeByte(bundle, tto++, OSETT_BLOB);
+                plo += ose_writeInt32(bundle, plo, OSE_INTPTR2);
+                plo += ose_writeAlignedPtr(bundle, plo, (void *)fn);
+                break;
+            }
+            }
+        }
+
         s = plo - o;
         ose_writeInt32(bundle, o, s - 4);
         return s;
     }
-    
-    char tt = va_arg(ap, int);
-    for(int i = 0; i < n; i++)
-    {
-        switch(tt)
-        {
-        case OSETT_INT32:
-        {
-            const int32_t v = va_arg(ap, int32_t);
-            ose_writeByte(bundle, tto++, OSETT_INT32);
-            plo += ose_writeInt32(bundle, plo, v);
-            break;
-        }
-        case OSETT_FLOAT:
-        {
-            const float v = va_arg(ap, double);
-            ose_writeByte(bundle, tto++, OSETT_FLOAT);
-            plo += ose_writeFloat(bundle, plo, v);
-            break;
-        }
-        case OSETT_STRING:
-        {
-            const char * const v = va_arg(ap, char*);
-            ose_assert(v);
-            const int32_t sl = strlen(v);
-            const int32_t psl = ose_pnbytes(sl);
-            ose_writeByte(bundle, tto++, OSETT_STRING);
-            plo += ose_writeString(bundle, plo, v, sl, psl);
-            break;
-        }
-        default:
-        case OSETT_BLOB:
-        {
-            const int32_t len = va_arg(ap, int);
-            const char * const blob = va_arg(ap, char*);
-            ose_writeByte(bundle, tto++, tt);
-            const int32_t wlen = ose_writeBlob(bundle,
-                                               plo,
-                                               len,
-                                               blob);
-            plo += wlen;
-            break;
-        }
-#ifdef OSE_PROVIDE_TYPE_SYMBOL
-        case OSETT_SYMBOL:
-        {
-            const char * const v = va_arg(ap, char*);
-            ose_assert(v);
-            const int32_t sl = strlen(v);
-            const int32_t psl = ose_pnbytes(sl);
-            ose_writeByte(bundle, tto++, OSETT_STRING);
-            plo += ose_writeString(bundle, plo, v, sl, psl);
-            break;
-        }
-#endif
-#ifdef OSE_PROVIDE_TYPE_DOUBLE
-        case OSETT_DOUBLE:
-        {
-            const double v = va_arg(ap, double);
-            ose_writeByte(bundle, tto++, OSETT_DOUBLE);
-            plo += ose_writeDouble(bundle, plo, v);
-            break;
-        }
-#endif
-#ifdef OSE_PROVIDE_TYPE_INT8
-        case OSETT_INT8:
-        {
-            const int v = va_arg(ap, int);
-            ose_writeByte(bundle, tto++, OSETT_INT8);
-            plo += ose_writeInt8(bundle, plo, v);
-            break;
-        }
-#endif
-#ifdef OSE_PROVIDE_TYPE_UINT8
-        case OSETT_UINT8:
-        {
-            const int v = va_arg(ap, int);
-            ose_writeByte(bundle, tto++, OSETT_UINT8);
-            plo += ose_writeUInt8(bundle, plo, v);
-            break;
-        }
-#endif
-#ifdef OSE_PROVIDE_TYPE_UINT32
-        case OSETT_UINT32:
-        {
-            const uint32_t v = va_arg(ap, uint32_t);
-            ose_writeByte(bundle, tto++, OSETT_UINT32);
-            plo += ose_writeUInt32(bundle, plo, v);
-            break;
-        }
-#endif
-#ifdef OSE_PROVIDE_TYPE_INT64
-        case OSETT_INT64:
-        {
-            const int64_t v = va_arg(ap, int64_t);
-            ose_writeByte(bundle, tto++, OSETT_INT64);
-            plo += ose_writeInt64(bundle, plo, v);
-            break;
-        }
-#endif
-#ifdef OSE_PROVIDE_TYPE_UINT64
-        case OSETT_UINT64:
-        {
-            const uint64_t v = va_arg(ap, uint64_t);
-            ose_writeByte(bundle, tto++, OSETT_UINT64);
-            plo += ose_writeUInt64(bundle, plo, v);
-            break;
-        }
-#endif
-#ifdef OSE_PROVIDE_TYPE_TIMETAG
-        case OSETT_TIMETAG:
-        {
-            const int32_t sec = va_arg(ap, int32_t);
-            const int32_t fsec = va_arg(ap, int32_t);
-            ose_writeByte(bundle, tto++, OSETT_TIMETAG);
-            plo += ose_writeTimetag(bundle, plo, sec, fsec);
-            break;
-        }
-#endif
-#ifdef OSE_PROVIDE_TYPE_TRUE
-        case OSETT_TRUE:
-        {
-            ose_writeByte(bundle, tto++, OSETT_TRUE);
-            break;
-        }
-#endif
-#ifdef OSE_PROVIDE_TYPE_FALSE
-        case OSETT_FALSE:
-        {
-            ose_writeByte(bundle, tto++, OSETT_FALSE);
-            break;
-        }
-#endif
-#ifdef OSE_PROVIDE_TYPE_NULL
-        case OSETT_NULL:
-        {
-            ose_writeByte(bundle, tto++, OSETT_NULL);
-            break;
-        }
-#endif
-#ifdef OSE_PROVIDE_TYPE_INFINITUM
-        case OSETT_INFINITUM:
-        {
-            ose_writeByte(bundle, tto++, OSETT_INFINITUM);
-            break;
-        }
-#endif
-        case OSETT_ALIGNEDPTR:
-        {
-            const ose_fn fn = va_arg(ap, ose_fn);
-            ose_writeByte(bundle, tto++, OSETT_BLOB);
-            plo += ose_writeInt32(bundle, plo, OSE_INTPTR2);
-            plo += ose_writeAlignedPtr(bundle, plo, (void *)fn);
-            break;
-        }
-        }
-        tt = va_arg(ap, int);
-    }
-
-    s = plo - o;
-    ose_writeInt32(bundle, o, s - 4);
-    return s;
 }
 
 int32_t ose_writeMessage(ose_bundle bundle,

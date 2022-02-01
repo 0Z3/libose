@@ -40,6 +40,8 @@
 
 #define ose_readInt32_outOfBounds(b, o)\
     ose_ntohl(*((int32_t *)(ose_getBundlePtr((b)) + (o))))
+#define ose_writeInt32_outOfBounds(b, o, i)\
+    *((int32_t *)(ose_getBundlePtr((b)) + (o))) = ose_htonl((i))
 
 static void ose_drop_impl(ose_bundle bundle, int32_t o, int32_t s);
 static void ose_dup_impl(ose_bundle bundle, int32_t o, int32_t s);
@@ -392,14 +394,14 @@ void ose_pushMessage(ose_bundle bundle,
     ose_assert(o >= OSE_BUNDLE_HEADER_LEN);
     va_list ap;
     va_start(ap, n);
-    int32_t s = ose_vwriteMessage(bundle,
-                                  o,
-                                  address,
-                                  addresslen,
-                                  n,
-                                  ap);
+    ose_vwriteMessage(bundle,
+                      o,
+                      address,
+                      addresslen,
+                      n,
+                      ap);
     va_end(ap);
-    ose_incSize(bundle, s);
+    /* ose_incSize(bundle, s); */
 }
 
 char *ose_peekAddress(const ose_bundle bundle)
@@ -685,12 +687,12 @@ void ose_2swap(ose_bundle bundle)
     be4(bundle, &onm3, &snm3, &onm2, &snm2, &onm1, &snm1, &on, &sn);
     const int32_t ss = snm3 + snm2 + 8;
     const int32_t fs = ose_readInt32_outOfBounds(bundle, on + sn + 4);
-    ose_writeInt32(bundle, on + sn + 4, 0);
+    ose_writeInt32_outOfBounds(bundle, on + sn + 4, 0);
     char *b = ose_getBundlePtr(bundle);
     memcpy(b + on + sn + 4, b + onm3, ss);
     memmove(b + onm3, b + onm1, snm3 + snm2 + snm1 + sn + 16);
     memset(b + on + sn + 4, 0, ss);
-    ose_writeInt32(bundle, on + sn + 4, fs);
+    ose_writeInt32_outOfBounds(bundle, on + sn + 4, fs);
     ose_incSize(bundle, 0);
 }
 
@@ -754,11 +756,11 @@ static void ose_notrot_impl(ose_bundle bundle,
 {
     char *b = ose_getBundlePtr(bundle);
     int32_t fs = ose_readInt32_outOfBounds(bundle, on + sn + 4);
-    ose_writeInt32(bundle, on + sn + 4, 0);
+    ose_writeInt32_outOfBounds(bundle, on + sn + 4, 0);
     memmove(b + onm2 + sn + 4, b + onm2, snm2 + snm1 + sn + 12);
     memcpy(b + onm2, b + on + sn + 4, sn + 4);
     memset(b + on + sn + 4, 0, sn + 4);
-    ose_writeInt32(bundle, on + sn + 4, fs);
+    ose_writeInt32_outOfBounds(bundle, on + sn + 4, fs);
     ose_incSize(bundle, 0);
 }
 
@@ -1020,7 +1022,7 @@ void ose_bundleAll(ose_bundle bundle)
     memmove(b + OSE_BUNDLE_HEADER_LEN + 4 + OSE_BUNDLE_HEADER_LEN,
             b + OSE_BUNDLE_HEADER_LEN,
             s - OSE_BUNDLE_HEADER_LEN);
-    ose_writeInt32(bundle, OSE_BUNDLE_HEADER_LEN, s);
+    ose_writeInt32_outOfBounds(bundle, OSE_BUNDLE_HEADER_LEN, s);
     memcpy(b + OSE_BUNDLE_HEADER_LEN + 4,
            OSE_BUNDLE_HEADER,
            OSE_BUNDLE_HEADER_LEN);
@@ -1322,16 +1324,21 @@ void ose_push(ose_bundle bundle)
     char *b = ose_getBundlePtr(bundle);
     if(s <= 16)
     {
-        ose_writeInt32(bundle, 16, OSE_BUNDLE_HEADER_LEN);
-        memcpy(b + 20, OSE_BUNDLE_HEADER, OSE_BUNDLE_HEADER_LEN);
         ose_incSize(bundle, 4 + OSE_BUNDLE_HEADER_LEN);
+        ose_writeInt32(bundle, OSE_BUNDLE_HEADER_LEN,
+                       OSE_BUNDLE_HEADER_LEN);
+        memcpy(b + OSE_BUNDLE_HEADER_LEN + 4,
+               OSE_BUNDLE_HEADER, OSE_BUNDLE_HEADER_LEN);
     }
     else if(s == 16 + ose_readInt32(bundle, 16) + 4)
     {
-        memmove(b + 36, b + 16, s - 16);
-        ose_writeInt32(bundle, 16, s);
-        memcpy(b + 20, OSE_BUNDLE_HEADER, OSE_BUNDLE_HEADER_LEN);
-        ose_incSize(bundle, 20);
+        ose_incSize(bundle, OSE_BUNDLE_HEADER_LEN + 4);
+        memmove(b + OSE_BUNDLE_HEADER_LEN * 2 + 4,
+                b + OSE_BUNDLE_HEADER_LEN, s - OSE_BUNDLE_HEADER_LEN);
+        ose_writeInt32(bundle, OSE_BUNDLE_HEADER_LEN, s);
+        memcpy(b + OSE_BUNDLE_HEADER_LEN + 4,
+               OSE_BUNDLE_HEADER, OSE_BUNDLE_HEADER_LEN);
+        
     }
     else
     {
@@ -1375,7 +1382,7 @@ void ose_push(ose_bundle bundle)
                 }
                 ose_writeByte(bundle, tto1 + ntt1, OSETT_BLOB);
                 int32_t bloblen = ose_readInt32(bundle, o2);
-                /* no need to pad since it's already
+                /* no need to ppad since it's already
                    4-byte aligned */
                 int32_t pbloblen = bloblen;
                 ose_addToInt32(bundle, o1, pbloblen + 4);
@@ -1408,7 +1415,7 @@ void ose_push(ose_bundle bundle)
                 memcpy(b + oo, b + plo2, s2 - ((plo2 - o2) - 4));
                 oo += s2 - ((plo2 - o2) - 4);
                 int32_t s3 = (oo - o3) - 4;
-                ose_writeInt32(bundle, o3, s3);
+                ose_writeInt32_outOfBounds(bundle, o3, s3);
                 memmove(b + o1, b + o3, s3 + 4);
                 memset(b + o1 + s3 + 4, 0, s2 + s1 + 8);
                 ose_addToSize(bundle,
@@ -1915,7 +1922,7 @@ void ose_getAddresses(ose_bundle bundle)
             on += ose_readInt32(bundle, on) + 4;
         }
         int32_t snp1 = (p - onp1);
-        ose_writeInt32(bundle, onp1, snp1 - 4);
+        ose_writeInt32_outOfBounds(bundle, onp1, snp1 - 4);
         ose_addToSize(bundle, snp1);
     }
 }
@@ -1996,7 +2003,8 @@ void ose_concatenateBlobs(ose_bundle bundle)
     {
         /* need to remove a type tag */
         memmove(b2 - 4, b2, blob2_psize + blob1_psize + 8);
-        ose_writeInt32(bundle, blob1_offset + 4 + blob1_psize, 0);
+        ose_writeInt32_outOfBounds(bundle,
+                                   blob1_offset + 4 + blob1_psize, 0);
         b1 -= 4;
         b1_end -= 4;
         b2 -= 4;
@@ -2985,20 +2993,22 @@ void ose_nth(ose_bundle bundle)
         int32_t ao = so + 4;
         int32_t tto = ao + 4;
         int32_t plo = tto + ose_pnbytes(nttn + 1);
-        ose_writeByte(bundle, tto, OSETT_ID);
+        /* ose_writeByte(bundle, tto, OSETT_ID); */
+        b[tto] = OSETT_ID;
         ++tto;
         for(i = 0; i < nttn; i++)
         {
             int32_t idx = ose_readInt32(bundle, plon + (i * 4));
             char tt = ose_readByte(bundle, ttonm1 + idx);
             int32_t sz = offsets[idx + 1] - offsets[idx];
-            ose_writeByte(bundle, tto, tt);
+            /* ose_writeByte(bundle, tto, tt); */
+            b[tto] = tt;
             memcpy(b + plo, b + offsets[idx], sz);
             plo += sz;
             ++tto;
         }
         int32_t newsize = (plo - so) - 4;
-        ose_writeInt32(bundle, so, newsize);
+        ose_writeInt32_outOfBounds(bundle, so, newsize);
         memmove(b + onm1, b + so, plo - so);
         int32_t diff = plo - (onm1 + newsize + 4);
         if(diff > 0)
@@ -3039,7 +3049,7 @@ void ose_nth(ose_bundle bundle)
             o += ss + 4;
         }
         int32_t bs = (o - so) - 4;
-        ose_writeInt32(bundle, so, bs);
+        ose_writeInt32_outOfBounds(bundle, so, bs);
         memmove(b + onm1, b + so, bs + 4);
         memset(b + onm1 + bs + 4, 0, (so + bs + 4) - (onm1 + bs + 4));
         ose_addToSize(bundle, bs - (snm1 + sn + 4));
@@ -3214,10 +3224,10 @@ void ose_makeBlob(ose_bundle bundle)
 void ose_pushBundle(ose_bundle bundle)
 {
     int32_t wp = ose_readSize(bundle);
+    ose_incSize(bundle, 4 + OSE_BUNDLE_HEADER_LEN);
     ose_writeInt32(bundle, wp, OSE_BUNDLE_HEADER_LEN);
     char *b = ose_getBundlePtr(bundle);
     memcpy(b + wp + 4, OSE_BUNDLE_HEADER, OSE_BUNDLE_HEADER_LEN);
-    ose_incSize(bundle, 4 + OSE_BUNDLE_HEADER_LEN);
 }
 
 /**************************************************
