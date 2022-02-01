@@ -836,126 +836,160 @@ void ose_alignPtr(ose_bundle bundle, const int32_t offset)
 
 int32_t ose_getLastBundleElemOffset(ose_constbundle bundle)
 {
+    ose_assert(ose_getBundlePtr(bundle));
     ose_assert(ose_isBundle(bundle));
+    ose_assert(ose_readSize(bundle) >= OSE_BUNDLE_HEADER_LEN);
     const int32_t bs = ose_readSize(bundle);
     if(bs == OSE_BUNDLE_HEADER_LEN)
     {
         return OSE_BUNDLE_HEADER_LEN;
     }
-    ose_assert(bs >= OSE_BUNDLE_HEADER_LEN);
-    int32_t o = OSE_BUNDLE_HEADER_LEN;
-    int32_t s = ose_readInt32(bundle, o);
-    ose_assert(s >= 0);
-    ose_assert(o + s + 4 <= bs);
-    while(o + s + 4 < bs)
     {
-        o += s + 4;
-        s = ose_readInt32(bundle, o);
+        int32_t o = OSE_BUNDLE_HEADER_LEN;
+        int32_t s = ose_readInt32(bundle, o);
         ose_assert(s >= 0);
         ose_assert(o + s + 4 <= bs);
+        while(o + s + 4 < bs)
+        {
+            o += s + 4;
+            s = ose_readInt32(bundle, o);
+            ose_assert(s >= 0);
+            ose_assert(o + s + 4 <= bs);
+        }
+        return o;
     }
-    return o;
 }
 
 int32_t ose_getBundleElemAddressOffset(ose_constbundle bundle,
                                        const int32_t elemoffset)
 {
+    ose_assert(ose_getBundlePtr(bundle));
     ose_assert(ose_isBundle(bundle));
     ose_assert(elemoffset >= OSE_BUNDLE_HEADER_LEN);
-    const int32_t bs = ose_readSize(bundle);(void)bs;
-    ose_assert(elemoffset < bs);
-    const int32_t ms = ose_readInt32(bundle, elemoffset);(void)ms;
-    ose_assert(ms > 0);
+    ose_assert(elemoffset < ose_readSize(bundle) - (4 + OSE_ADDRESS_MIN_PLEN));
+    ose_assert(ose_readInt32(bundle, elemoffset) > 0);
     return elemoffset + 4;
 }
 
 int32_t ose_getBundleElemTTOffset(ose_constbundle bundle,
                                   const int32_t elemoffset)
 {
-    const int32_t ao = ose_getBundleElemAddressOffset(bundle,
-                                                      elemoffset);
-    const int32_t bs = ose_readSize(bundle);(void)bs;
-    const int32_t ms = ose_readInt32(bundle, elemoffset);(void)ms;
-    const int32_t to = ao + ose_getPaddedStringLen(bundle, ao);
-    ose_assert(to < bs);
-    ose_assert(to - elemoffset < ms + 4);
-    return to;
+    ose_assert(ose_getBundlePtr(bundle));
+    ose_assert(ose_isBundle(bundle));
+    ose_assert(elemoffset >= OSE_BUNDLE_HEADER_LEN);
+    {
+        const int32_t ao = ose_getBundleElemAddressOffset(bundle,
+                                                          elemoffset);
+        const int32_t to = ao + ose_getPaddedStringLen(bundle, ao);
+        ose_assert(to <= ose_readSize(bundle) - 4);
+        ose_assert(to - elemoffset < ose_readInt32(bundle, elemoffset) + 4);
+        return to;
+    }
 }
 
 int32_t ose_getBundleElemPayloadOffset(ose_constbundle bundle,
                                        const int32_t elemoffset)
 {
-    const int32_t to = ose_getBundleElemTTOffset(bundle, elemoffset);
-    const int32_t bs = ose_readSize(bundle);(void)bs;
-    const int32_t ms = ose_readInt32(bundle, elemoffset);(void)ms;
-    int32_t po = 0;
-    if(ose_getBundleElemType(bundle, elemoffset) == OSETT_BUNDLE)
+    ose_assert(ose_getBundlePtr(bundle));
+    ose_assert(ose_isBundle(bundle));
+    ose_assert(elemoffset >= OSE_BUNDLE_HEADER_LEN);
     {
-        po = to + OSE_TIMETAG_LEN;
+        const int32_t to = ose_getBundleElemTTOffset(bundle, elemoffset);
+        int32_t po = 0;
+        if(ose_getBundleElemType(bundle, elemoffset) == OSETT_BUNDLE)
+        {
+            po = to + OSE_TIMETAG_LEN;
+        }
+        else
+        {
+            po = to + ose_getPaddedStringLen(bundle, to);
+        }
+        ose_assert(po < ose_readSize(bundle));
+        ose_assert(po - elemoffset < ose_readInt32(bundle, elemoffset) + 4);
+        return po;
     }
-    else
-    {
-        po = to + ose_getPaddedStringLen(bundle, to);
-    }
-    ose_assert(po < bs);
-    ose_assert(po - elemoffset < ms + 4);
-    return po;
 }
 
 int32_t ose_getFirstOffsetForMatch(ose_constbundle bundle,
                                    const char * const addr)
 {
-    const char * const b = ose_getBundlePtr(bundle);
-    int32_t o = OSE_BUNDLE_HEADER_LEN;
-    const int32_t s = ose_readSize(bundle);
-    while(o < s)
+    ose_assert(ose_getBundlePtr(bundle));
+    ose_assert(ose_isBundle(bundle));
+    ose_assert(addr);
     {
-        if(!strcmp(b + o + 4, addr))
+        const char * const b = ose_getBundlePtr(bundle);
+        int32_t o = OSE_BUNDLE_HEADER_LEN;
+        const int32_t s = ose_readSize(bundle);
+        ose_assert(s >= OSE_BUNDLE_HEADER_LEN);
+        while(o < s)
         {
-            return o;
+            const int32_t ss = ose_readInt32(bundle, o);
+            ose_assert(ss > 0);
+            if(!strncmp(b + o + 4, addr, ss))
+            {
+                return o;
+            }
+            o += ss + 4;
         }
-        o += ose_readInt32(bundle, o) + 4;
+        return 0;
     }
-    return 0;
 }
 
 int32_t ose_getFirstOffsetForPMatch(ose_constbundle bundle,
                                     const char * const addr)
 {
-    const char * const b = ose_getBundlePtr(bundle);
-    int32_t o = OSE_BUNDLE_HEADER_LEN;
-    const int32_t s = ose_readSize(bundle);
-    while(o < s)
+    ose_assert(ose_getBundlePtr(bundle));
+    ose_assert(ose_isBundle(bundle));
+    ose_assert(addr);
     {
-        int po, ao;
-        int r = ose_match_pattern(b + o + 4, addr, &po, &ao);
-        if(r & OSE_MATCH_ADDRESS_COMPLETE)
+        const char * const b = ose_getBundlePtr(bundle);
+        int32_t o = OSE_BUNDLE_HEADER_LEN;
+        const int32_t s = ose_readSize(bundle);
+        ose_assert(s >= OSE_BUNDLE_HEADER_LEN);
+        while(o < s)
         {
-            return o;
+            const int32_t ss = ose_readInt32(bundle, o);
+            int po, ao;
+            int r = 0;
+            ose_assert(ss > 0);
+            r = ose_match_pattern(b + o + 4, addr, &po, &ao);
+            if(r & OSE_MATCH_ADDRESS_COMPLETE)
+            {
+                return o;
+            }
+            o += ss + 4;
         }
-        o += ose_readInt32(bundle, o) + 4;
+        return 0;
     }
-    return 0;
 }
 
 int32_t ose_getFirstOffsetForFullPMatch(ose_constbundle bundle,
                                         const char * const addr)
 {
-    const char * const b = ose_getBundlePtr(bundle);
-    int32_t o = OSE_BUNDLE_HEADER_LEN;
-    const int32_t s = ose_readSize(bundle);
-    while(o < s)
+    ose_assert(ose_getBundlePtr(bundle));
+    ose_assert(ose_isBundle(bundle));
+    ose_assert(addr);
     {
-        int po, ao;
-        int r = ose_match_pattern(b + o + 4, addr, &po, &ao);
-        if(r & OSE_MATCH_ADDRESS_COMPLETE
-           && r & OSE_MATCH_PATTERN_COMPLETE)
+        const char * const b = ose_getBundlePtr(bundle);
+        int32_t o = OSE_BUNDLE_HEADER_LEN;
+        const int32_t s = ose_readSize(bundle);
+        ose_assert(s >= OSE_BUNDLE_HEADER_LEN);
+        while(o < s)
         {
-            return o;
+            const int32_t ss = ose_readInt32(bundle, o);
+            int po, ao;
+            int r = 0;
+            ose_assert(ss > 0);
+			r = ose_match_pattern(b + o + 4, addr, &po, &ao);
+            if(r & OSE_MATCH_ADDRESS_COMPLETE
+               && r & OSE_MATCH_PATTERN_COMPLETE)
+            {
+                return o;
+            }
+            o += ss + 4;
         }
-        o += ose_readInt32(bundle, o) + 4;
+        return 0;
     }
-    return 0;
 }
 
 int32_t ose_getTypedDatumSize(const char typetag, const char * const ptr)

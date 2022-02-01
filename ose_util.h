@@ -68,8 +68,8 @@ bool ose_isBoolType(char typetag);
 
    @param bundle The bundle.  
 
-   @returns #OSETT_TRUE if the first 8 bytes of that the bundle
-   points to are \#bundle, #OSETT_FALSE otherwise (including the
+   @returns #true if the first 8 bytes of that the bundle
+   points to are \#bundle, #false otherwise (including the
    case where bundle is a NULL pointer).
 */
 bool ose_isBundle(ose_constbundle bundle);
@@ -83,7 +83,7 @@ bool ose_isBundle(ose_constbundle bundle);
 
    @param bundle The bundle.
 
-   @retuns #OSETT_TRUE if bundle is empty, #OSETT_FALSE otherwise.
+   @retuns #true if bundle is empty, #false otherwise.
 
    @note An empty bundle contains no messages, but still has a
    header. If bundle points to NULL, or has a size of 0, this
@@ -177,12 +177,12 @@ int32_t ose_readBlobSize(ose_constbundle bundle, int32_t offset);
 
 
 /**
-   @brief Get the number of bytes required to pad a blob size to a multiple
-   of 4 bytes.
+   @brief Get the number of bytes required to pad a blob size to a
+   multiple of 4 bytes.
 
-   @param n Number of bytes.
-   @returns The number of additional bytes required for n to be a multiple 
-   of 4.
+   @param n Number of bytes.  
+   @returns The number of additional
+   bytes required for n to be a multiple of 4.
 */
 int32_t ose_getBlobPaddingForNBytes(int32_t n);
 int32_t ose_getPaddedBlobSize(ose_constbundle bundle,
@@ -264,10 +264,43 @@ int32_t ose_getBundleElemTTOffset(ose_constbundle bundle,
 int32_t ose_getBundleElemPayloadOffset(ose_constbundle bundle,
                                        int32_t elemoffset);
 
+/**
+   	@brief Get the offset of the first element whose address
+   	matches addr, using simple string comparison.
+
+	@param bundle Bundle containing elements to test.
+	@param addr Address to test against the elements of the bundle.
+	@returns The offset in bytes of the first match, or 0 if no
+	match was found.
+ */
 int32_t ose_getFirstOffsetForMatch(ose_constbundle bundle,
                                    const char * const addr);
+
+/**
+   	@brief Get the offset of the first element whose address
+   	matches addr, using OSC pattern matching syntax.
+
+	@param bundle Bundle containing elements to test.
+	@param addr Address to test against the elements of the bundle.
+	@returns The offset in bytes of the first match, or 0 if no
+	match was found.
+
+	@note This function will report a match if only part of 
+	the address in the bundle matched addr, for example:
+	the addr "/foo" will match "/foo/bar" in the bundle.
+ */
 int32_t ose_getFirstOffsetForPMatch(ose_constbundle bundle,
                                     const char * const addr);
+
+/**
+   	@brief Get the offset of the first element whose address
+   	fully matches addr, using OSC pattern matching syntax.
+
+	@param bundle Bundle containing elements to test.
+	@param addr Address to test against the elements of the bundle.
+	@returns The offset in bytes of the first match, or 0 if no
+	match was found.
+ */
 int32_t ose_getFirstOffsetForFullPMatch(ose_constbundle bundle,
                                         const char * const addr);
 
