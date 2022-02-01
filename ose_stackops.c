@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2019-20 John MacCallum Permission is hereby granted,
+  Copyright (c) 2019-22 John MacCallum Permission is hereby granted,
   free of charge, to any person obtaining a copy of this software
   and associated documentation files (the "Software"), to deal in
   the Software without restriction, including without limitation the
@@ -37,6 +37,9 @@
 #include "ose_util.h"
 #include "ose_assert.h"
 #include "ose_match.h"
+
+#define ose_readInt32_outOfBounds(b, o)\
+    ose_ntohl(*((int32_t *)(ose_getBundlePtr((b)) + (o))))
 
 static void ose_drop_impl(ose_bundle bundle, int32_t o, int32_t s);
 static void ose_dup_impl(ose_bundle bundle, int32_t o, int32_t s);
@@ -681,7 +684,7 @@ void ose_2swap(ose_bundle bundle)
     int32_t onm3, snm3, onm2, snm2, onm1, snm1, on, sn;
     be4(bundle, &onm3, &snm3, &onm2, &snm2, &onm1, &snm1, &on, &sn);
     const int32_t ss = snm3 + snm2 + 8;
-    const int32_t fs = ose_readInt32(bundle, on + sn + 4);
+    const int32_t fs = ose_readInt32_outOfBounds(bundle, on + sn + 4);
     ose_writeInt32(bundle, on + sn + 4, 0);
     char *b = ose_getBundlePtr(bundle);
     memcpy(b + on + sn + 4, b + onm3, ss);
@@ -750,7 +753,7 @@ static void ose_notrot_impl(ose_bundle bundle,
                             int32_t sn)
 {
     char *b = ose_getBundlePtr(bundle);
-    int32_t fs = ose_readInt32(bundle, on + sn + 4);
+    int32_t fs = ose_readInt32_outOfBounds(bundle, on + sn + 4);
     ose_writeInt32(bundle, on + sn + 4, 0);
     memmove(b + onm2 + sn + 4, b + onm2, snm2 + snm1 + sn + 12);
     memcpy(b + onm2, b + on + sn + 4, sn + 4);
@@ -786,7 +789,8 @@ void ose_over(ose_bundle bundle)
     ose_over_impl(bundle, onm1, snm1, on, sn);
 }
 
-static void pick(ose_bundle bundle, int32_t *_o1, int32_t *_o2, int32_t *_s)
+static void pick(ose_bundle bundle,
+                 int32_t *_o1, int32_t *_o2, int32_t *_s)
 {
     int32_t i = ose_popInt32(bundle);
     int32_t n = 0;
@@ -1201,7 +1205,7 @@ void ose_pop(ose_bundle bundle)
     }
 }
 
-static void popAll_bundle(ose_bundle bundle, int32_t o)
+static void popAll_bundle(ose_bundle bundle, const int32_t o)
 {
     int32_t s = ose_readInt32(bundle, o);
     ose_incSize(bundle, s - OSE_BUNDLE_HEADER_LEN);
@@ -1213,15 +1217,15 @@ static void popAll_bundle(ose_bundle bundle, int32_t o)
     ose_writeInt32(bundle, o1, OSE_BUNDLE_HEADER_LEN);
     memcpy(b + o1 + 4, OSE_BUNDLE_HEADER, OSE_BUNDLE_HEADER_LEN);
 
+    int32_t bs = ose_readSize(bundle);
     int32_t o2 = o + s + 4;
-    int32_t s2 = ose_readInt32(bundle, o2);
-    o1 -= (s2 + 4);
-    while(o1 >= o)
+    int32_t s2 = 0;
+    while(o2 < bs)
     {
+        s2 = ose_readInt32(bundle, o2);
+        o1 -= (s2 + 4);
         memcpy(b + o1, b + o2, s2 + 4);
         o2 += s2 + 4;
-        s2 = ose_readInt32(bundle, o2);
-        o1 -= s2 + 4;
     }
     memset(b + o + s + 4, 0, s - OSE_BUNDLE_HEADER_LEN);
     ose_decSize(bundle, (s - OSE_BUNDLE_HEADER_LEN));
@@ -1775,6 +1779,7 @@ void ose_countElems(ose_bundle bundle)
 void ose_countItems(ose_bundle bundle)
 {
     int32_t o = ose_getLastBundleElemOffset(bundle);
+    /* runtime check for bundle with 0 elems */
     int32_t n = 0;
     char t = ose_getBundleElemType(bundle, o);
     if(t == OSETT_BUNDLE)
@@ -1870,6 +1875,7 @@ void ose_sizeTT(ose_bundle bundle)
 
 void ose_getAddresses(ose_bundle bundle)
 {
+    /* this should be a runtime check */
     ose_assert(ose_bundleHasAtLeastNElems(bundle, 1));
     int32_t on = ose_getLastBundleElemOffset(bundle);
     char *b = ose_getBundlePtr(bundle);
@@ -2542,7 +2548,7 @@ void ose_trimStringEnd(ose_bundle bundle)
     ose_getNthPayloadItem(bundle, 1, o, &to, &ntt, &lto, &po, &lpo);
     ose_assert(ose_isStringType(ose_readByte(bundle, lto)));
     int32_t s = ose_getStringLen(bundle, lpo);
-    char *p = ose_readString(bundle, lpo);
+    char *p = (char *)ose_readString(bundle, lpo);
     int32_t i = s - 1;
     while(i >= 0)
     {
@@ -2568,7 +2574,7 @@ void ose_trimStringStart(ose_bundle bundle)
     ose_getNthPayloadItem(bundle, 1, o, &to, &ntt, &lto, &po, &lpo);
     ose_assert(ose_isStringType(ose_readByte(bundle, lto)));
     int32_t s = ose_getStringLen(bundle, lpo);
-    char *p = ose_readString(bundle, lpo);
+    char *p = (char *)ose_readString(bundle, lpo);
     int32_t i = 0;
     while(i < s)
     {

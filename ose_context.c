@@ -29,6 +29,11 @@
 #include "ose_stackops.h"
 #include "ose_context.h"
 
+#define ose_readInt32_outOfBounds(b, o)\
+    ose_ntohl(*((int32_t *)(ose_getBundlePtr((b)) + (o))))
+#define ose_writeInt32_outOfBounds(b, o, i)\
+    *((int32_t *)(ose_getBundlePtr((b)) + (o))) = ose_htonl((i))
+
 #ifdef OSE_DEBUG
 /* generate symbols in case we're in a debugger */
 const int32_t ose_context_bundle_size_offset =
@@ -113,7 +118,9 @@ int32_t ose_init(ose_bundle bundle,
 {
     ose_assert(size % 4 == 0);
     int32_t fs = writeContextMessage(bundle, size, address);
-    ose_addToInt32(bundle, -4, size);
+    ose_writeInt32_outOfBounds(bundle, -4,
+                               ose_readInt32_outOfBounds(bundle, -4)
+                               + size);
     return fs;
 }
 
@@ -123,10 +130,12 @@ int32_t ose_pushContextMessage(ose_bundle bundle,
 {
     ose_assert(size % 4 == 0);
     int32_t bs1 = ose_readSize(bundle);
-    int32_t bs2 = ose_readInt32(bundle, bs1);
+    int32_t bs2 = ose_readInt32_outOfBounds(bundle, bs1);
     ose_assert(size <= bs2);
     int32_t fs = writeContextMessage(bundle, size, address);
-    ose_addToInt32(bundle, -4, size);
+    ose_writeInt32_outOfBounds(bundle, -4,
+                               ose_readInt32_outOfBounds(bundle, -4)
+                               + size);
     bs1 = ose_readSize(bundle);
     bs2 -= size;
     ose_writeInt32(bundle, bs1, bs2);
@@ -135,7 +144,8 @@ int32_t ose_pushContextMessage(ose_bundle bundle,
 
 int32_t ose_spaceAvailable(ose_constbundle bundle)
 {
-    return ose_readInt32(bundle, OSE_CONTEXT_TOTAL_SIZE_OFFSET)
+    return ose_readInt32_outOfBounds(bundle,
+                                     OSE_CONTEXT_TOTAL_SIZE_OFFSET)
         - ose_readSize(bundle);
 }
 
@@ -164,8 +174,9 @@ ose_bundle ose_enter(ose_bundle bundle, const char * const address)
 
 ose_bundle ose_exit(ose_bundle bundle)
 {
-    int32_t o = ose_readInt32(bundle,
-                              OSE_CONTEXT_PARENT_BUNDLE_OFFSET_OFFSET);
+    int32_t o =
+        ose_readInt32_outOfBounds(bundle,
+                                  OSE_CONTEXT_PARENT_BUNDLE_OFFSET_OFFSET);
     char *b = ose_getBundlePtr(bundle);
     b -= o;
     ose_bundle ret = ose_makeBundle(b);
@@ -189,8 +200,9 @@ void ose_addToSize(ose_bundle bundle, int32_t amt)
     ose_assert(os >= OSE_BUNDLE_HEADER_LEN);
     int32_t ns1 = os + amt;
     ose_assert(ns1 >= OSE_BUNDLE_HEADER_LEN);
-    int32_t ns2 = ose_readInt32(bundle,
-                                OSE_CONTEXT_TOTAL_SIZE_OFFSET) - ns1;
+    int32_t ns2 =
+        ose_readInt32_outOfBounds(bundle,
+                                  OSE_CONTEXT_TOTAL_SIZE_OFFSET) - ns1;
     ose_assert(ns2 >= 0);
     if(amt < 0)
     {
@@ -199,7 +211,7 @@ void ose_addToSize(ose_bundle bundle, int32_t amt)
     ose_writeInt32(bundle, -4, ns1);
     ose_writeInt32(bundle, ns1, ns2);
     ose_assert(ose_readSize(bundle) >= OSE_BUNDLE_HEADER_LEN);
-    ose_assert(ose_readInt32(bundle, ose_readSize(bundle)) >= 0);
+    ose_assert(ose_readInt32_outOfBounds(bundle, ose_readSize(bundle)) >= 0);
 }
 
 void ose_incSize(ose_bundle bundle, int32_t amt)
@@ -210,13 +222,14 @@ void ose_incSize(ose_bundle bundle, int32_t amt)
     ose_assert(os >= OSE_BUNDLE_HEADER_LEN);
     int32_t ns1 = os + amt;
     ose_assert(ns1 >= OSE_BUNDLE_HEADER_LEN);
-    int32_t ns2 = ose_readInt32(bundle,
-                                OSE_CONTEXT_TOTAL_SIZE_OFFSET) - ns1;
+    int32_t ns2 =
+        ose_readInt32_outOfBounds(bundle,
+                                  OSE_CONTEXT_TOTAL_SIZE_OFFSET) - ns1;
     ose_assert(ns2 >= 0);
     ose_writeInt32(bundle, -4, ns1);
     ose_writeInt32(bundle, ns1, ns2);
     ose_assert(ose_readSize(bundle) >= OSE_BUNDLE_HEADER_LEN);
-    ose_assert(ose_readInt32(bundle, ose_readSize(bundle)) >= 0);
+    ose_assert(ose_readInt32_outOfBounds(bundle, ose_readSize(bundle)) >= 0);
 }
 
 void ose_decSize(ose_bundle bundle, int32_t amt)
@@ -227,14 +240,15 @@ void ose_decSize(ose_bundle bundle, int32_t amt)
     ose_assert(os >= OSE_BUNDLE_HEADER_LEN);
     int32_t ns1 = os - amt;
     ose_assert(ns1 >= OSE_BUNDLE_HEADER_LEN);
-    int32_t ns2 = ose_readInt32(bundle,
-                                OSE_CONTEXT_TOTAL_SIZE_OFFSET) - ns1;
+    int32_t ns2 =
+        ose_readInt32_outOfBounds(bundle,
+                                  OSE_CONTEXT_TOTAL_SIZE_OFFSET) - ns1;
     ose_assert(ns2 >= 0);
     ose_writeInt32(bundle, os, 0);
     ose_writeInt32(bundle, -4, ns1);
     ose_writeInt32(bundle, ns1, ns2);
     ose_assert(ose_readSize(bundle) >= OSE_BUNDLE_HEADER_LEN);
-    ose_assert(ose_readInt32(bundle, ose_readSize(bundle)) >= 0);
+    ose_assert(ose_readInt32_outOfBounds(bundle, ose_readSize(bundle)) >= 0);
 }
 
 void ose_copyElemAtOffset(int32_t srcoffset,

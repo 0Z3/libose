@@ -47,7 +47,7 @@ extern "C" {
    @returns The closest multiple of 4 greater than n.
 */
 #define ose_pnbytes(n) (((n) + 4) & 0xfffffffc)
-#define ose_pstrlen(s) ose_pnbytes(strlen(s))
+int32_t ose_pstrlen(const char * const s);
 
 bool ose_isAddressChar(char c);
 bool ose_isKnownTypetag(char typetag);
@@ -115,31 +115,33 @@ bool ose_bundleHasAtLeastNElems(ose_constbundle bundle,
                                 int32_t n);
 char ose_getBundleElemType(ose_constbundle bundle, int32_t offset);
 
+/* read/write byte */
 #ifdef OSE_DEBUG
 char ose_readByte(ose_constbundle bundle, int32_t offset);
 int32_t ose_writeByte(ose_bundle bundle, int32_t offset, char i);
-int32_t ose_readInt32(ose_constbundle bundle, int32_t offset);
-int32_t ose_writeInt32(ose_bundle bundle, int32_t offset, int32_t i);
-float ose_readFloat(ose_constbundle bundle, int32_t offset);
-int32_t ose_writeFloat(ose_bundle bundle, int32_t offset, float f);
 #else
 #define ose_readByte(b, o) (ose_getBundlePtr(b)[o])
 #define ose_writeByte(b, o, v) (ose_getBundlePtr(b)[o] = v, 1)
+#endif
+
+/* read/write int32 */
+#ifdef OSE_DEBUG
+int32_t ose_readInt32(ose_constbundle bundle, int32_t offset);
+int32_t ose_writeInt32(ose_bundle bundle, int32_t offset, int32_t i);
+#else
 #define ose_readInt32(b, o)                                 \
     (ose_ntohl(*((int32_t *)(ose_getBundlePtr(b) + o))))
 #define ose_writeInt32(b, o, v)                                 \
     (*((int32_t *)(ose_getBundlePtr(b) + o)) = ose_htonl(v), 4)
 #endif
-#define ose_addToInt32(b, offset, amt)                      \
-    ose_writeInt32((b),                                     \
-                   (offset),                                \
-                   ose_readInt32((b), (offset)) + (amt))
+
+/* read/write float */
 float ose_readFloat(ose_constbundle bundle, int32_t offset);
-int32_t ose_writeFloat(ose_bundle bundle,
-                       int32_t offset,
-                       float f);
+int32_t ose_writeFloat(ose_bundle bundle, int32_t offset, float f);
+
+/* read/write string */
 #ifdef OSE_DEBUG
-char *ose_readString(ose_bundle bundle, int32_t offset);
+const char *ose_readString(ose_bundle bundle, int32_t offset);
 int32_t ose_getStringLen(ose_constbundle bundle, int32_t offset);
 int32_t ose_getPaddedStringLen(ose_constbundle bundle,
                                int32_t offset);
@@ -156,8 +158,10 @@ int32_t ose_writeString(ose_bundle bundle,
 #define ose_writeString(b, o, s, slen, slen_padded)         \
     (memcpy(ose_getBundlePtr(b) + o, s, slen), slen_padded)
 #endif
+
+/* read/write blob */
 #ifdef OSE_DEBUG
-char *ose_readBlob(ose_bundle bundle, int32_t offset);
+const char *ose_readBlob(ose_bundle bundle, int32_t offset);
 int32_t ose_readBlobSize(ose_constbundle bundle, int32_t offset);
 #else
 #define ose_readBlob(b, o) (ose_readString(b, o))
@@ -165,6 +169,10 @@ int32_t ose_readBlobSize(ose_constbundle bundle, int32_t offset);
 #endif
 
 
+#define ose_addToInt32(b, offset, amt)                      \
+    ose_writeInt32((b),                                     \
+                   (offset),                                \
+                   ose_readInt32((b), (offset)) + (amt))
 
 
 
@@ -179,7 +187,8 @@ int32_t ose_readBlobSize(ose_constbundle bundle, int32_t offset);
 int32_t ose_getBlobPaddingForNBytes(int32_t n);
 int32_t ose_getPaddedBlobSize(ose_constbundle bundle,
                               int32_t offset);
-char *ose_readBlobPayload(ose_bundle bundle, int32_t offset);
+const char *ose_readBlobPayload(ose_constbundle bundle,
+                                int32_t offset);
 int32_t ose_writeBlob(ose_bundle bundle,
                       int32_t offset,
                       int32_t blobsize,
@@ -227,7 +236,7 @@ int32_t ose_writeTimetag(ose_bundle bundle,
                          uint32_t sec,
                          uint32_t fsec);
 #endif
-void *ose_readAlignedPtr(ose_constbundle bundle,
+const void *ose_readAlignedPtr(ose_constbundle bundle,
                          const int32_t offset);
 int32_t ose_writeAlignedPtr(ose_bundle bundle,
                             const int32_t offset,

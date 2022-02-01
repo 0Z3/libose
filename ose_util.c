@@ -29,6 +29,12 @@
 #include "ose_util.h"
 #include "ose_match.h"
 
+int32_t ose_pstrlen(const char * const s)
+{
+    ose_assert(s);
+    return ose_pnbytes(strlen(s));
+}
+
 bool ose_isAddressChar(const char c)
 {
     if(c < 32)
@@ -312,7 +318,7 @@ int32_t ose_getBundleElemElemCount(ose_constbundle bundle,
 }
 
 bool ose_bundleHasAtLeastNElems(ose_constbundle bundle,
-                                    const int32_t n)
+                                const int32_t n)
 {
 	ose_assert(ose_getBundlePtr(bundle));
     ose_assert(ose_isBundle(bundle));
@@ -359,19 +365,14 @@ char ose_getBundleElemType(ose_constbundle bundle,
     }
 }
 
-/************************************************************
- * the read and write functions intentionally do not assert offset
- * >= 0 as they may be used to read and write to locations "behind"
- * the current bundle. 
- ************************************************************/
-
 #ifdef OSE_DEBUG
 char ose_readByte(ose_constbundle bundle, const int32_t offset)
 {
-    const char *b = ose_getBundlePtr(bundle);
-    ose_assert(b);
-    b += offset;
-    return *b;
+    ose_assert(ose_getBundlePtr(bundle));
+    ose_assert(ose_isBundle(bundle));
+    ose_assert(offset >= 0);
+    ose_assert(offset < ose_readSize(bundle));
+    return ose_getBundlePtr(bundle)[offset];
 }
 #endif
 
@@ -391,10 +392,11 @@ int32_t ose_writeByte(ose_bundle bundle,
 #ifdef OSE_DEBUG
 int32_t ose_readInt32(ose_constbundle bundle, const int32_t offset)
 {
-    const char *b = ose_getBundlePtr(bundle);
-    ose_assert(b);
-    b += offset;
-    return ose_ntohl(*((int32_t *)b));
+    ose_assert(ose_getBundlePtr(bundle));
+    ose_assert(ose_isBundle(bundle));
+    ose_assert(offset >= 0);
+    ose_assert(offset <= ose_readSize(bundle) - 4);
+    return ose_ntohl(*((int32_t *)(ose_getBundlePtr(bundle) + offset)));
 }
 #endif
 
@@ -411,9 +413,15 @@ int32_t ose_writeInt32(ose_bundle bundle, const int32_t offset, const int32_t i)
 
 float ose_readFloat(ose_constbundle bundle, const int32_t offset)
 {
-    const int32_t i = ose_readInt32(bundle, offset);
-    const char * const p = (char *)&i;
-    return *((float *)p);
+    ose_assert(ose_getBundlePtr(bundle));
+    ose_assert(ose_isBundle(bundle));
+    ose_assert(offset >= 0);
+    ose_assert(offset < ose_readSize(bundle) - 4);
+    {
+    	const int32_t i = ose_readInt32(bundle, offset);
+        const char * const p = (char *)&i;
+        return *((float *)p);
+    }
 }
 
 int32_t ose_writeFloat(ose_bundle bundle, const int32_t offset, const float f)
@@ -424,31 +432,64 @@ int32_t ose_writeFloat(ose_bundle bundle, const int32_t offset, const float f)
 }
 
 #ifdef OSE_DEBUG
-char *ose_readString(ose_bundle bundle, const int32_t offset)
+const char *ose_readString(ose_constbundle bundle,
+                           const int32_t offset)
 {
-    char *b = ose_getBundlePtr(bundle);
-    ose_assert(b);
-    b += offset;
-    return b;
+    ose_assert(ose_getBundlePtr(bundle));
+    ose_assert(ose_isBundle(bundle));
+    ose_assert(offset >= 0);
+    ose_assert(offset < ose_readSize(bundle));
+#ifdef OSE_DEBUG
+    /* if this function is ever included in non-debug builds, this
+       inner block should still be removed at compile-time */
+    {
+        const char * const str = ose_getBundlePtr(bundle) + offset;
+        const int32_t bs = ose_readSize(bundle);
+    	const char * const p = memchr(str, 0, bs - offset);
+        ose_assert(p && "string is not NULL-terminated");
+    }
+#endif 
+    return ose_getBundlePtr(bundle) + offset;
 }
 #endif
 
 #ifdef OSE_DEBUG
-int32_t ose_getStringLen(ose_constbundle bundle, const int32_t offset)
+int32_t ose_getStringLen(ose_constbundle bundle,
+                         const int32_t offset)
 {
-    const char *b = ose_getBundlePtr(bundle);
-    ose_assert(b);
-    b += offset;
-    return strlen(b);
+    ose_assert(ose_getBundlePtr(bundle));
+    ose_assert(ose_isBundle(bundle));
+    ose_assert(offset >= 0);
+    ose_assert(offset < ose_readSize(bundle));
+    {
+        const char * const str = ose_getBundlePtr(bundle) + offset;
+        const int32_t bs = ose_readSize(bundle);
+    	const char * const p = memchr(str, 0, bs - offset);
+        ose_assert(p && "string is not NULL-terminated");
+        return p - str;
+    }
 }
 #endif
 
 #ifdef OSE_DEBUG
-int32_t ose_getPaddedStringLen(ose_constbundle bundle, const int32_t offset)
+int32_t ose_getPaddedStringLen(ose_constbundle bundle,
+                               const int32_t offset)
 {
-    const char * const b = ose_getBundlePtr(bundle);
-    ose_assert(b);
-    return ose_pstrlen(b + offset);
+    ose_assert(ose_getBundlePtr(bundle));
+    ose_assert(ose_isBundle(bundle));
+    ose_assert(offset >= 0);
+    ose_assert(offset < ose_readSize(bundle));
+    {
+        const char * const str = ose_getBundlePtr(bundle) + offset;
+        const int32_t bs = ose_readSize(bundle);
+    	const char * const p = memchr(str, 0, bs - offset);
+        ose_assert(p && "string is not NULL-terminated");
+        {
+            const int32_t ps = ose_pnbytes(p - str);
+            ose_assert(offset + ps <= bs);
+            return ps;
+        }
+    }
 }
 #endif
 
@@ -476,16 +517,21 @@ int32_t ose_writeString(ose_bundle bundle,
 #endif
 
 #ifdef OSE_DEBUG
-char *ose_readBlob(ose_bundle bundle, const int32_t offset)
+const char *ose_readBlob(ose_constbundle bundle, const int32_t offset)
 {
-    char *b = ose_getBundlePtr(bundle);
-    ose_assert(b);
-    b += offset;
-    return b;
+    ose_assert(ose_getBundlePtr(bundle));
+    ose_assert(ose_isBundle(bundle));
+    ose_assert(offset >= 0);
+    ose_assert(offset <= ose_readSize(bundle) - 4);
+    return ose_getBundlePtr(bundle);
 }
 
 int32_t ose_readBlobSize(ose_constbundle bundle, const int32_t offset)
 {
+    ose_assert(ose_getBundlePtr(bundle));
+    ose_assert(ose_isBundle(bundle));
+    ose_assert(offset >= 0);
+    ose_assert(offset <= ose_readSize(bundle) - 4);
     return ose_readInt32(bundle, offset);
 }
 #endif
@@ -493,35 +539,56 @@ int32_t ose_readBlobSize(ose_constbundle bundle, const int32_t offset)
 int32_t ose_getBlobPaddingForNBytes(const int32_t n)
 {
     ose_assert(n >= 0);
-    const int32_t nm4 = n % 4;
-    if(nm4 != 0)
     {
-        return 4 - (nm4);
+        const int32_t nm4 = n % 4;
+        if(nm4 != 0)
+        {
+            const int32_t r = 4 - (nm4);
+            ose_assert(r >= 0);
+            return r;
+        }
+        else
+        {
+        	return 0;
+        }
     }
-    return 0;
 }
 
 int32_t ose_getPaddedBlobSize(ose_constbundle bundle,
                               const int32_t offset)
 {
-    int32_t s = ose_readBlobSize(bundle, offset);
-    ose_assert(s >= 0);
-    const int32_t sm4 = s % 4;
-    if(sm4 != 0)
+    ose_assert(ose_getBundlePtr(bundle));
+    ose_assert(ose_isBundle(bundle));
+    ose_assert(offset >= 0);
+    ose_assert(offset <= ose_readSize(bundle) - 4);
     {
-        s += 4 - sm4;
+        int32_t s = ose_readBlobSize(bundle, offset);
+        ose_assert(s >= 0);
+        {
+            const int32_t sm4 = s % 4;
+            if(sm4 != 0)
+            {
+                const int32_t r = s + 4 - sm4;
+                ose_assert(r >= 0);
+                return r;
+            }
+            else
+            {
+                return s;
+            }
+        }
     }
-    return s;
 }
 
-char *ose_readBlobPayload(ose_bundle bundle, const int32_t offset)
+const char *ose_readBlobPayload(ose_constbundle bundle,
+                                const int32_t offset)
 {
-    char *b = ose_getBundlePtr(bundle);
-    ose_assert(b);
-    b += offset;
-    const int32_t s = ose_readInt32(bundle, offset);(void)s;
-    ose_assert(s > 0);
-    return b + 4;
+    ose_assert(ose_getBundlePtr(bundle));
+    ose_assert(ose_isBundle(bundle));
+    ose_assert(offset >= 0);
+    ose_assert(offset <= ose_readSize(bundle) - 4);
+    ose_assert(ose_readInt32(bundle, offset) > 0);
+    return ose_getBundlePtr(bundle) + offset + 4;
 }
 
 int32_t ose_writeBlob(ose_bundle bundle,
@@ -559,6 +626,10 @@ int32_t ose_writeBlob(ose_bundle bundle,
 #ifdef OSE_PROVIDE_TYPE_DOUBLE
 double ose_readDouble(ose_constbundle bundle, const int32_t offset)
 {
+    ose_assert(ose_getBundlePtr(bundle));
+    ose_assert(ose_isBundle(bundle));
+    ose_assert(offset >= 0);
+    ose_assert(offset <= ose_readSize(bundle) - 8);
     const char * const b = ose_getBundlePtr(bundle) + offset;
     const int64_t i = ose_ntohll(*((int64_t *)b));
     return *((double *)&i);
@@ -579,9 +650,11 @@ int32_t ose_writeDouble(ose_bundle bundle,
 #ifdef OSE_PROVIDE_TYPE_UINT32
 uint32_t ose_readUInt32(ose_constbundle bundle, const int32_t offset)
 {
-    const char * const b = ose_getBundlePtr(bundle) + offset;
-    const int32_t i = ose_readInt32(bundle, offset);
-    return *((uint32_t *)&i);
+    ose_assert(ose_getBundlePtr(bundle));
+    ose_assert(ose_isBundle(bundle));
+    ose_assert(offset >= 0);
+    ose_assert(offset <= ose_readSize(bundle) - 4);
+    return ose_ntohl(*((uint32_t *)(ose_getBundlePtr(bundle) + offset)));
 }
 
 int32_t ose_writeUInt32(ose_bundle bundle,
@@ -596,9 +669,11 @@ int32_t ose_writeUInt32(ose_bundle bundle,
 #ifdef OSE_PROVIDE_TYPE_INT64
 int64_t ose_readInt64(ose_constbundle bundle, const int32_t offset)
 {
-    const char * const b = ose_getBundlePtr(bundle) + offset;
-    const int64_t i = *((int64_t *)b);
-    return ose_ntohll(i);
+    ose_assert(ose_getBundlePtr(bundle));
+    ose_assert(ose_isBundle(bundle));
+    ose_assert(offset >= 0);
+    ose_assert(offset <= ose_readSize(bundle) - 8);
+    return ose_ntohll(*((int64_t *)(ose_getBundlePtr(bundle) + offset)));
 }
 
 int32_t ose_writeInt64(ose_bundle bundle,
@@ -615,9 +690,12 @@ int32_t ose_writeInt64(ose_bundle bundle,
 #ifdef OSE_PROVIDE_TYPE_UINT64
 uint64_t ose_readUInt64(ose_constbundle bundle, const int32_t offset)
 {
-    const char * const b = ose_getBundlePtr(bundle) + offset;
-    const uint64_t i = *((uint64_t *)b);
-    return ose_ntohll(i);
+    ose_assert(ose_getBundlePtr(bundle));
+    ose_assert(ose_isBundle(bundle));
+    ose_assert(offset >= 0);
+    ose_assert(offset <= ose_readSize(bundle) - 8);
+    return ose_ntohll(*((uint64_t *)(ose_getBundlePtr(bundle) +
+                                     offset)));
 }
 
 int32_t ose_writeUInt64(ose_bundle bundle,
@@ -635,13 +713,19 @@ int32_t ose_writeUInt64(ose_bundle bundle,
 struct ose_timetag ose_readTimetag(ose_constbundle bundle,
                                    const int32_t offset)
 {
-    const char * const b = ose_getBundlePtr(bundle) + offset;
-    struct ose_timetag tt =
-        {
-            ose_ntohl(*((uint32_t *)b)),
-            ose_ntohl(*((uint32_t *)(b + 4)))
-        };
-    return tt;
+    ose_assert(ose_getBundlePtr(bundle));
+    ose_assert(ose_isBundle(bundle));
+    ose_assert(offset >= 0);
+    ose_assert(offset <= ose_readSize(bundle) - 8);
+    {
+        const char * const b = ose_getBundlePtr(bundle) + offset;
+        struct ose_timetag tt =
+            {
+                ose_ntohl(*((uint32_t *)b)),
+                ose_ntohl(*((uint32_t *)(b + 4)))
+            };
+        return tt;
+    }
 }
 
 int32_t ose_writeTimetag(ose_bundle bundle,
@@ -657,15 +741,20 @@ int32_t ose_writeTimetag(ose_bundle bundle,
 }
 #endif
 
-void *ose_readAlignedPtr(ose_constbundle bundle, const int32_t offset)
+const void *ose_readAlignedPtr(ose_constbundle bundle,
+                               const int32_t offset)
 {
-    const char * b = ose_getBundlePtr(bundle);
-    ose_assert(b);
-    b += offset;
-    int32_t a = ose_readInt32(bundle, offset);
-    intptr_t i = 0;
-    i = *((intptr_t *)(b + 4 + a));
-    return (void *)i;
+    ose_assert(ose_getBundlePtr(bundle));
+    ose_assert(ose_isBundle(bundle));
+    ose_assert(offset >= 0);
+    ose_assert(OSE_INTPTR2 == sizeof(intptr_t) * 2);
+    ose_assert(offset <= ose_readSize(bundle) - OSE_INTPTR2);
+    {
+        const char * const b = ose_getBundlePtr(bundle) + offset;
+        const int32_t alignment = ose_readInt32(bundle, offset);
+        const intptr_t i = *((intptr_t *)(b + 4 + alignment));
+        return (void *)i;
+    }
 }
 
 int32_t ose_writeAlignedPtr(ose_bundle bundle,
@@ -688,19 +777,24 @@ int32_t ose_writeAlignedPtr(ose_bundle bundle,
 
 void ose_alignPtr(ose_bundle bundle, const int32_t offset)
 {
-    char *b = ose_getBundlePtr(bundle);
-    ose_assert(b);
-    b += offset;
-    int32_t aold = ose_readInt32(bundle, offset);
-    int32_t anew = 0;
-    while((uintptr_t)(b + 4 + anew) % sizeof(intptr_t))
+    ose_assert(ose_getBundlePtr(bundle));
+    ose_assert(ose_isBundle(bundle));
+    ose_assert(offset >= 0);
+    ose_assert(OSE_INTPTR2 == sizeof(intptr_t) * 2);
+    ose_assert(offset <= ose_readSize(bundle) - OSE_INTPTR2);
     {
-        anew++;
-    }
-    if(anew != aold)
-    {
-        *((int32_t *)b) = ose_htonl(anew);
-        memmove(b + 4 + anew, b + 4 + aold, sizeof(intptr_t));
+        char * const b = ose_getBundlePtr(bundle) + offset;
+        const int32_t aold = ose_readInt32(bundle, offset);
+        int32_t anew = 0;
+        while((uintptr_t)(b + 4 + anew) % sizeof(intptr_t))
+        {
+            anew++;
+        }
+        if(anew != aold)
+        {
+            *((int32_t *)b) = ose_htonl(anew);
+            memmove(b + 4 + anew, b + 4 + aold, sizeof(intptr_t));
+        }
     }
 }
 

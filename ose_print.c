@@ -32,100 +32,105 @@
 #define INCP(bufp, amt) ((bufp) ? ((bufp) += (amt)) : (bufp))
 #define INCL(bufp, bufl, amt) ((bufp) ? ((bufl) -= (amt)) : (bufl))
 
-#define ose_snprintfi(bufp, bufl, n, total, fmt, ...)			\
-	{								\
+#define ose_snprintfi(bufp, bufl, n, total, fmt, ...)       \
+	{                                                       \
 		int32_t n = snprintf(bufp, bufl, fmt, __VA_ARGS__);	\
-		if(bufp){						\
-			bufp += n;					\
-		}							\
-		if(bufl >= n){						\
-			bufl -= n;					\
-		}else{							\
-			bufl = 0;					\
-		}							\
-		total += n;						\
+		if(bufp){                                           \
+			bufp += n;                                      \
+		}                                                   \
+		if(bufl >= n){                                      \
+			bufl -= n;                                      \
+		}else{                                              \
+			bufl = 0;                                       \
+		}                                                   \
+		total += n;                                         \
 	}
 
 static int32_t _ose_pprintBundle(ose_bundle bundle,
-				 int32_t offset,
-				 char *buf,
-				 int32_t buflen,
-				 int32_t indent);
+                                 int32_t offset,
+                                 char *buf,
+                                 int32_t buflen,
+                                 int32_t indent);
 
 /**************************************************
  * pretty printing
  **************************************************/
 
 int32_t ose_pprintMessageAddr(ose_bundle bundle,
-			      int32_t offset,
-			      int32_t ao,
-			      char *buf,
-			      int32_t buflen)
+                              int32_t offset,
+                              int32_t ao,
+                              char *buf,
+                              int32_t buflen)
 {
-	char *addr = ose_readString(bundle, ao);
+	const char *addr = ose_readString(bundle, ao);
 	return snprintf(buf, buflen, "%s ", addr);
 }
 
 int32_t ose_pprintMessageArg(ose_bundle bundle,
-			     int32_t offset,
-			     int32_t tto,
-			     int32_t plo,
-			     char *buf,
-			     int32_t buflen)
+                             int32_t offset,
+                             int32_t tto,
+                             int32_t plo,
+                             char *buf,
+                             int32_t buflen)
 {
 	const char sep = ':';
 	char tt = ose_readByte(bundle, tto);
 	switch(tt){
 	case OSETT_INT32:
 		return snprintf(buf, buflen,
-				"[i%c%d]",
-				sep,
-				ose_readInt32(bundle, plo));
+                        "[i%c%d]",
+                        sep,
+                        ose_readInt32(bundle, plo));
 	case OSETT_FLOAT:
 		return snprintf(buf, buflen,
-				"[f%c%f]",
-				sep,
-				ose_readFloat(bundle, plo));
+                        "[f%c%f]",
+                        sep,
+                        ose_readFloat(bundle, plo));
 	case OSETT_STRING:
 		return snprintf(buf, buflen,
-				"[s%c%s]",
-				sep,
-				ose_readString(bundle, plo));
+                        "[s%c%s]",
+                        sep,
+                        ose_readString(bundle, plo));
 	case OSETT_BLOB: {
 		int32_t blobsize = ose_readInt32(bundle, plo);
 		int32_t n =  snprintf(buf, buflen,
-				      "[b:<%d:",
-				      blobsize);
+                              "[b:<%d:",
+                              blobsize);
 		int32_t nn = n;
 		INCP(buf, n);
 		INCL(buf, buflen, n);
-		char *p = ose_readString(bundle, plo + 4);
-		
-		if(blobsize > 8){
-			for(int i = 0; i < 4; i++){
-				n = snprintf(buf, buflen, "%02X", p[i]);
-				nn += n;
-				INCP(buf, n);
-				INCL(buf, buflen, n);
-			}
-			n = snprintf(buf, buflen, "..");
-			nn += n;
-			INCP(buf, n);
-			INCL(buf, buflen, n);
-			for(int j = blobsize - 4; j < blobsize; j++){
-				n = snprintf(buf, buflen, "%02X", p[j]);
-				nn += n;
-				INCP(buf, n);
-				INCL(buf, buflen, n);
-			}
-		}else{
-			for(int k = 0; k < blobsize; k++){
-				n = snprintf(buf, buflen, "%02X", p[k]);
-				nn += n;
-				INCP(buf, n);
-				INCL(buf, buflen, n);
-			}
-		}
+
+        if(blobsize > 0)
+        {
+            const char *p = ose_readString(bundle, plo + 4);
+            if(blobsize > 8){
+                for(int i = 0; i < 4; i++){
+                    n = snprintf(buf, buflen, "%02X", p[i]);
+                    nn += n;
+                    INCP(buf, n);
+                    INCL(buf, buflen, n);
+                }
+                n = snprintf(buf, buflen, "..");
+                nn += n;
+                INCP(buf, n);
+                INCL(buf, buflen, n);
+                for(int j = blobsize - 4; j < blobsize; j++){
+                    n = snprintf(buf, buflen, "%02X", p[j]);
+                    nn += n;
+                    INCP(buf, n);
+                    INCL(buf, buflen, n);
+                }
+            }else{
+                for(int k = 0; k < blobsize; k++){
+                    n = snprintf(buf, buflen, "%02X", p[k]);
+                    nn += n;
+                    INCP(buf, n);
+                    INCL(buf, buflen, n);
+                }
+            }
+        }
+        else
+        {}
 		
 
 		n = snprintf(buf, buflen, ">]");
@@ -141,10 +146,10 @@ int32_t ose_pprintMessageArg(ose_bundle bundle,
 }
 
 static int32_t ose_pprintBundleElem_msg(ose_bundle bundle,
-					int32_t offset,
-					char *buf,
-					int32_t buflen,
-					int32_t indent)
+                                        int32_t offset,
+                                        char *buf,
+                                        int32_t buflen,
+                                        int32_t indent)
 {
 	char *b = ose_getBundlePtr(bundle);
 	int32_t s = ose_readInt32(bundle, offset);
@@ -159,10 +164,10 @@ static int32_t ose_pprintBundleElem_msg(ose_bundle bundle,
 	{
 		/* address */
 		n = ose_pprintMessageAddr(bundle,
-					  offset,
-					  ao,
-					  bufp,
-					  bufl);
+                                  offset,
+                                  ao,
+                                  bufp,
+                                  bufl);
 		nn += n;
 		INCP(bufp, n);
 		INCL(bufp, bufl, n);
@@ -171,11 +176,11 @@ static int32_t ose_pprintBundleElem_msg(ose_bundle bundle,
 	while(plo < (offset + 4 + s) && ose_readByte(bundle, tto)){
 		char tt = ose_readByte(bundle, tto);
 		n = ose_pprintMessageArg(bundle,
-					 offset,
-					 tto,
-					 plo,
-					 bufp,
-					 bufl);
+                                 offset,
+                                 tto,
+                                 plo,
+                                 bufp,
+                                 bufl);
 		nn += n;
 		INCP(bufp, n);
 		INCL(bufp, bufl, n);
@@ -192,10 +197,10 @@ static int32_t ose_pprintBundleElem_msg(ose_bundle bundle,
 }
 
 static int32_t ose_pprintBundleElem(ose_bundle bundle,
-				    int32_t offset,
-				    char *buf,
-				    int32_t buflen,
-				    int32_t indent)
+                                    int32_t offset,
+                                    char *buf,
+                                    int32_t buflen,
+                                    int32_t indent)
 {
 	int32_t nn = 0;
 	char *bufp = buf;
@@ -204,10 +209,10 @@ static int32_t ose_pprintBundleElem(ose_bundle bundle,
 	char betype = ose_getBundleElemType(bundle, offset);
 	if(betype == OSETT_MESSAGE){
 		n = ose_pprintBundleElem_msg(bundle,
-					      offset,
-					      bufp,
-					      bufl,
-					      indent);
+                                     offset,
+                                     bufp,
+                                     bufl,
+                                     indent);
 		return n;
 	}else if(betype == OSETT_BUNDLE){
 		if(ose_getBundleElemElemCount(bundle, offset) == 0){
@@ -219,30 +224,33 @@ static int32_t ose_pprintBundleElem(ose_bundle bundle,
 		INCP(bufp, n);
 		INCL(bufp, bufl, n);
 		n = _ose_pprintBundle(bundle,
-				       offset + 4,
-				       bufp,
-				       bufl,
-				       indent + 1);
+                              offset + 4,
+                              bufp,
+                              bufl,
+                              indent + 1);
 		nn += n;
 		INCP(bufp, n);
 		INCL(buf, bufl, n);
 		return nn;
 	}else{
 		ose_assert(0 &&
-			   "bundle elem is neither a message nor a bundle");
+                   "bundle elem is neither a message nor a bundle");
 	}
 	return 0;
 }
 
 static int32_t _ose_pprintBundle(ose_bundle bundle,
-				 int32_t offset,
-				 char *buf,
-				 int32_t buflen,
-				 int32_t indent)
+                                 int32_t offset,
+                                 char *buf,
+                                 int32_t buflen,
+                                 int32_t indent)
 {
 	ose_assert(ose_isBundle(bundle));
 	int32_t nn = 0;
-	int32_t ss = ose_readInt32(bundle, offset - 4);
+    /* it's possible that offset will be 0, so don't use
+       ose_readInt32() */
+	int32_t ss = ose_ntohl(*((int32_t *)(ose_getBundlePtr(bundle) +
+                                         (offset - 4))));
 	char *bufp = buf;
 	int32_t bufl = buflen;
 	int32_t o = OSE_BUNDLE_HEADER_LEN;
