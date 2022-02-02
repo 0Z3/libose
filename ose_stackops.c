@@ -1088,7 +1088,7 @@ void ose_bundleFromTop(ose_bundle bundle)
     memmove(b + oo + 4 + OSE_BUNDLE_HEADER_LEN,
             b + oo,
             ss);
-    ose_writeInt32(bundle, oo, ss + OSE_BUNDLE_HEADER_LEN);
+    ose_writeInt32_outOfBounds(bundle, oo, ss + OSE_BUNDLE_HEADER_LEN);
     memcpy(b + oo + 4,
            OSE_BUNDLE_HEADER,
            OSE_BUNDLE_HEADER_LEN);

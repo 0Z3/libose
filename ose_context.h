@@ -105,8 +105,9 @@ extern "C" {
     ose_ntohl(*((int32_t *)(ose_getBundlePtr(b) + \
                             OSE_CONTEXT_STATUS_OFFSET)))
 
-#define ose_context_set_status(b, s)                \
-    ose_writeInt32(b, OSE_CONTEXT_STATUS_OFFSET, s)
+#define ose_context_set_status(b, s)                                \
+    *((int32_t *)(ose_getBundlePtr(b) + OSE_CONTEXT_STATUS_OFFSET)) \
+    = (s)
 
 
 
