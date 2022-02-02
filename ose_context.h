@@ -129,7 +129,7 @@ extern "C" {
 
 
 #ifdef OSE_DEBUG
-int32_t ose_readSize(ose_bundle bundle);
+int32_t ose_readSize(ose_constbundle bundle);
 #else
 #define ose_readSize(b)                                       \
     ose_ntohl(*((int32_t *)(ose_getBundlePtr((b)) + OSE_CONTEXT_BUNDLE_SIZE_OFFSET)))
@@ -162,7 +162,7 @@ int32_t ose_readSize(ose_bundle bundle);
 */
 #define OSE_CONTEXT_MAX_OVERHEAD                \
     (OSE_CONTEXT_ALIGNMENT                      \
-     * 4                                        \
+     * 2                                        \
      + OSE_BUNDLE_HEADER_LEN                    \
      + OSE_CONTEXT_MESSAGE_OVERHEAD             \
      + OSE_CONTEXT_STATUS_MESSAGE_SIZE          \
@@ -225,7 +225,8 @@ int32_t ose_spaceAvailable(ose_constbundle bundle);
    the bundle to enter.
    @returns The requested bundle.
 */
-ose_bundle ose_enter(ose_bundle bundle, const char * const address);
+ose_bundle ose_enter(ose_bundle bundle,
+                     const char * const address);
 
 
 

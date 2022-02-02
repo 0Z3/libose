@@ -1905,12 +1905,14 @@ void ose_getAddresses(ose_bundle bundle)
         int32_t p = onp1 + 4;
         memcpy(b + p, OSE_ADDRESS_ANONVAL, OSE_ADDRESS_ANONVAL_SIZE);
         p += OSE_ADDRESS_ANONVAL_SIZE;
-        ose_writeByte(bundle, p, OSETT_ID);
+        /* ose_writeByte_outOfBounds(bundle, p, OSETT_ID); */
+        b[p] = OSETT_ID;
         ++p;
         on += 4 + OSE_BUNDLE_HEADER_LEN;
         while(on < onp1)
         {
-            ose_writeByte(bundle, p, OSETT_STRING);
+            /* ose_writeByte_outOfBounds(bundle, p, OSETT_STRING); */
+            b[p] = OSETT_STRING;
             ++p;
             on += ose_readInt32(bundle, on) + 4;
         }

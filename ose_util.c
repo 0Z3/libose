@@ -1489,11 +1489,11 @@ int32_t ose_writeMessage(ose_bundle bundle,
     /*                                 ap); */
     /* va_end(ap); */
     /* return len; */
-    int32_t ms = ose_vcomputeMessageSize(bundle,
-                                         address,
-                                         addresslen,
-                                         n,
-                                         ap);
+    const int32_t ms = ose_vcomputeMessageSize(bundle,
+                                               address,
+                                               addresslen,
+                                               n,
+                                               ap);
     int32_t ms2 = 0;
     va_end(ap);
     ose_incSize(bundle, ms);
