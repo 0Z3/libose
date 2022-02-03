@@ -30,24 +30,32 @@
 #include "ose_assert.h"
 #include "ose_vm.h"
 #include "ose_symtab.h"
+#include "ose_errno.h"
 
 #define OSE_BUILTIN_DEFN(name)                  \
     void ose_builtin_##name(ose_bundle bundle)	\
     {                                           \
-        ose_##name(OSEVM_STACK(bundle));        \
+        ose_bundle vm_s = OSEVM_STACK(bundle);  \
+        enum ose_errno e = OSE_ERR_NONE;        \
+        ose_##name(vm_s);                       \
+        if((e = ose_errno_get(vm_s)))           \
+        {                                       \
+            ose_errno_set(bundle, e);           \
+            ose_errno_set(vm_s, OSE_ERR_NONE);  \
+        }                                       \
     }
 
-#define OSE_BUILTIN_DEFPRED(name)                           \
-    void ose_builtin_##name(ose_bundle bundle)              \
-    {                                                       \
-        ose_bundle vm_s = OSEVM_STACK(bundle);              \
+#define OSE_BUILTIN_DEFPRED(name)                                   \
+    void ose_builtin_##name(ose_bundle bundle)                      \
+    {                                                               \
+        ose_bundle vm_s = OSEVM_STACK(bundle);                      \
         /* this assertion is wrong, but will be replaced by a */    \
         /* version of ose_popInt32 that we can trust, and that  */  \
         /* sets the status on error */                              \
-        /* ose_assert(ose_isIntegerType(ose_peekType(vm_s)));  \ */\
-        int32_t i = ose_popInt32(vm_s);                     \
-        bool r = ose_##name(i);                             \
-        ose_pushInt32(vm_s, r == true ? 1 : 0);             \
+        /* ose_assert(ose_isIntegerType(ose_peekType(vm_s)));  \ */ \
+        int32_t i = ose_popInt32(vm_s);                             \
+        bool r = ose_##name(i);                                     \
+        ose_pushInt32(vm_s, r == true ? 1 : 0);                     \
     }
 
 OSE_BUILTIN_DEFN(2drop)

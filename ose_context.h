@@ -201,6 +201,7 @@ int32_t ose_init(ose_bundle bundle,
 int32_t ose_pushContextMessage(ose_bundle bundle,
                                int32_t size,
                                const char * const address);
+void ose_dropContextMessage(ose_bundle bundle);
 
 
 

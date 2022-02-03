@@ -162,6 +162,32 @@ int32_t ose_pushContextMessage(ose_bundle bundle,
     }
 }
 
+void ose_dropContextMessage(ose_bundle bundle)
+{
+    ose_assert(ose_getBundlePtr(bundle));
+    ose_assert(ose_isBundle(bundle));
+    ose_assert(ose_readSize(bundle) > OSE_BUNDLE_HEADER_LEN);
+    {
+        const int32_t bs = ose_readSize(bundle);
+        int32_t o = OSE_BUNDLE_HEADER_LEN;
+        int32_t s = ose_readInt32(bundle, o);
+        ose_assert(s >= OSE_CONTEXT_MESSAGE_OVERHEAD);
+        while(o < bs)
+        {
+            if(o + s + 4 >= bs)
+            {
+                break;
+            }
+            o += s + 4;
+            s = ose_readInt32(bundle, o);
+        }
+        ose_assert(o < bs);
+        ose_assert(o + s + 4 == bs);
+        memset(ose_getBundlePtr(bundle) + o, 0, s + 4);
+        ose_decSize(bundle, s + 4);
+    }
+}
+
 int32_t ose_spaceAvailable(ose_constbundle bundle)
 {
     ose_assert(ose_getBundlePtr(bundle));

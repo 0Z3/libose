@@ -37,6 +37,7 @@
 #include "ose_util.h"
 #include "ose_assert.h"
 #include "ose_match.h"
+#include "ose_errno.h"
 
 #define ose_readInt32_outOfBounds(b, o)\
     ose_ntohl(*((int32_t *)(ose_getBundlePtr((b)) + (o))))
@@ -3254,11 +3255,23 @@ void ose_add(ose_bundle bundle)
                           &nm1to, &nm1ntt, &nm1lto, &nm1po, &nm1lpo);
     ose_getNthPayloadItem(bundle, 1, on,
                           &nto, &nntt, &nlto, &npo, &nlpo);
-    char t2 = ose_readByte(bundle, nm1lto); (void)t2;
-    ose_assert(ose_isNumericType(t2));
+    char t2 = ose_readByte(bundle, nm1lto); /* (void)t2; */
+    /* ose_assert(ose_isNumericType(t2)); */
     char t1 = ose_readByte(bundle, nlto);
-    ose_assert(ose_isNumericType(t1));
-    ose_assert(t1 == t2);
+    /* ose_assert(ose_isNumericType(t1)); */
+    /* ose_assert(t1 == t2); */
+    if(!ose_isNumericType(t1)
+       || !ose_isNumericType(t2)
+       || t1 != t2)
+    {
+        ose_errno_set(bundle, OSE_ERR_ITEM_TYPE);
+        return;
+    }
+    /* char t2 = ose_readByte(bundle, nm1lto); (void)t2; */
+    /* ose_assert(ose_isNumericType(t2)); */
+    /* char t1 = ose_readByte(bundle, nlto); */
+    /* ose_assert(ose_isNumericType(t1)); */
+    /* ose_assert(t1 == t2); */
     char *b = ose_getBundlePtr(bundle);
     switch(t1)
     {

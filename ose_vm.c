@@ -34,6 +34,7 @@
 #include "ose_symtab.h"
 #include "ose_builtins.h"
 #include "ose_vm.h"
+#include "ose_errno.h"
 
 #if defined(OSE_ENDIAN)
 
@@ -864,6 +865,7 @@ char osevm_step(ose_bundle osevm)
 void osevm_run(ose_bundle osevm)
 {
     ose_bundle vm_i = OSEVM_INPUT(osevm);
+    ose_bundle vm_s = OSEVM_STACK(osevm);
     ose_bundle vm_c = OSEVM_CONTROL(osevm);
     ose_bundle vm_d = OSEVM_DUMP(osevm);
     int32_t n = ose_getBundleElemCount(vm_d);
@@ -894,6 +896,14 @@ void osevm_run(ose_bundle osevm)
                 applyControl(osevm, ose_peekAddress(vm_c));
                 /* check status and drop into */
                 /* debugger if necessary */
+                enum ose_errno e = ose_errno_get(osevm);
+                if(e)
+                {
+                    ose_errno_set(osevm, OSE_ERR_NONE);
+                    ose_pushInt32(vm_s, e);
+                    ose_pushString(vm_c, "/!/exception");
+                    ose_pushString(vm_c, "");
+                }
                 if(ose_bundleHasAtLeastNElems(vm_c, 1))
                 {
                     ose_drop(vm_c);
