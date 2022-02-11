@@ -75,7 +75,7 @@ release: CFLAGS+=$(DEFINES) -Wall -O3 -c $(EXTRA_CFLAGS)
 release: LDFLAGS+=
 release: $(STATIC_TARGET) $(DYNAMIC_TARGET)
 
-debug: CFLAGS+=$(DEFINES) -Wall -DOSE_CONF_DEBUG -O0 -g$(DEBUG_SYMBOLS) -gmodules -c $(EXTRA_CFLAGS)
+debug: CFLAGS+=$(DEFINES) -Wall -DOSE_CONF_DEBUG -O0 -g$(DEBUG_SYMBOLS) -gmodules -c $(EXTRA_CFLAGS) -std=c89 -pedantic
 debug: LDFLAGS+=
 debug: $(STATIC_TARGET) $(DYNAMIC_TARGET)
 

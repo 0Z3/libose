@@ -431,7 +431,7 @@ void ose_appendBundle(ose_bundle src, ose_bundle dest)
     ose_assert(ose_isBundle(src));
     ose_assert(ose_getBundlePtr(dest));
     ose_assert(ose_isBundle(dest));
-    ose_assert(ose_bundleHasAtLeastNElems(src, 1));
+    if(ose_readSize(src) > OSE_BUNDLE_HEADER_LEN)
     {
         char *sp = ose_getBundlePtr(src);
         char *dp = ose_getBundlePtr(dest);
@@ -440,33 +440,32 @@ void ose_appendBundle(ose_bundle src, ose_bundle dest)
         const int32_t ds = ose_readSize(dest);
         ose_assert(ss > 0);
         ose_assert(ds >= OSE_BUNDLE_HEADER_LEN);
-        if(so >= OSE_BUNDLE_HEADER_LEN)
+        /* if(so >= OSE_BUNDLE_HEADER_LEN) */
+        /* { */
+        if(!strncmp(sp + so + 4, OSE_BUNDLE_ID, OSE_BUNDLE_ID_LEN))
         {
-            if(!strncmp(sp + so + 4, OSE_BUNDLE_ID, OSE_BUNDLE_ID_LEN))
-            {
-                ose_addToSize(dest, ss - OSE_BUNDLE_HEADER_LEN);
-                memcpy(dp + ds,
-                       sp + so + 4 + OSE_BUNDLE_HEADER_LEN,
-                       ss - OSE_BUNDLE_HEADER_LEN);
-            }
-            else
-            {
-                ose_addToSize(dest, ss + 4);
-                memcpy(dp + ds,
-                       sp + so,
-                       ss + 4);
-            }
-            {
-                /* drop */
-                memset(sp + so, 0, ss + 4);
-                ose_decSize(src, ss + 4);
-            }
+            ose_addToSize(dest, ss - OSE_BUNDLE_HEADER_LEN);
+            memcpy(dp + ds,
+                   sp + so + 4 + OSE_BUNDLE_HEADER_LEN,
+                   ss - OSE_BUNDLE_HEADER_LEN);
         }
         else
         {
-            /* if the source is empty, do nothing */
-            ;
+            ose_addToSize(dest, ss + 4);
+            memcpy(dp + ds,
+                   sp + so,
+                   ss + 4);
         }
+        {
+            /* drop */
+            memset(sp + so, 0, ss + 4);
+            ose_decSize(src, ss + 4);
+        }
+    }
+    else
+    {
+        /* if the source is empty, do nothing */
+        ;
     }
 }
 
