@@ -996,11 +996,41 @@ static void ose_swap_impl(ose_bundle bundle,
                           int32_t offset_n,
                           int32_t size_n)
 {
+    ose_assert(ose_getBundlePtr(bundle));
+    ose_assert(size_nm1 > 0);
+    ose_assert(size_n > 0);
+    ose_assert(offset_nm1 + size_nm1 + 4 < ose_readSize(bundle));
+    ose_assert(offset_n + size_n + 4 <= ose_readSize(bundle));
+    ose_assert(ose_spaceAvailable(bundle) - size_n > size_nm1 ? size_n : size_nm1);
     char *b = ose_getBundlePtr(bundle);
-    memcpy(b + offset_n + size_n + 4, b + offset_nm1, size_nm1 + 4);
-    memmove(b + offset_nm1, b + offset_n, size_nm1 + size_n + 8);
-    memset(b + offset_n + size_n + 4, 0, size_nm1 + 4);
-    ose_incSize(bundle, 0);
+    if(size_nm1 > size_n)
+    {
+        ose_incSize(bundle, size_n + 4);
+        memmove(b + offset_nm1 + size_n + 4,
+                b + offset_nm1,
+                size_n + size_nm1 + 8);
+        memcpy(b + offset_nm1,
+               b + offset_n + size_n + 4,
+               size_n + 4);
+        memset(b + offset_n + size_n + 4,
+               0,
+               size_n + 4);
+        ose_decSize(bundle, size_n + 4);
+    }
+    else
+    {
+        ose_incSize(bundle, size_nm1 + 4);
+        memcpy(b + offset_n + size_n + 4,
+               b + offset_nm1,
+               size_nm1 + 4);
+        memmove(b + offset_nm1,
+                b + offset_n,
+                size_nm1 + size_n + 8);
+        memset(b + offset_n + size_n + 4,
+               0,
+               size_nm1 + 4);
+        ose_decSize(bundle, size_nm1 + 4);
+    }
 }
 
 void ose_swap(ose_bundle bundle)
