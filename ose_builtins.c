@@ -719,8 +719,11 @@ void ose_builtin_assignStackToEnv(ose_bundle osevm)
     ose_bundle vm_e = OSEVM_ENV(osevm);
 
     const char * const str = ose_peekString(vm_s);
-    if(!strncmp(str, OSE_ADDRESS_ANONVAL, OSE_ADDRESS_ANONVAL_LEN)
-       && ose_readSize(vm_e) == OSE_BUNDLE_HEADER_LEN)
+    if((OSE_ADDRESS_ANONVAL_LEN > 0
+        && !strncmp(str,
+                    OSE_ADDRESS_ANONVAL,
+                    OSE_ADDRESS_ANONVAL_LEN))
+       || strlen(str) == 0)
     {
         /* if there's nothing in the env, and this is the empty
            string, rollMatch_impl will crash, because the string
