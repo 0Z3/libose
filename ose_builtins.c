@@ -720,9 +720,7 @@ void ose_builtin_assignStackToEnv(ose_bundle osevm)
 
     const char * const str = ose_peekString(vm_s);
     if((OSE_ADDRESS_ANONVAL_LEN > 0
-        && !strncmp(str,
-                    OSE_ADDRESS_ANONVAL,
-                    OSE_ADDRESS_ANONVAL_LEN))
+        && !strcmp(str, OSE_ADDRESS_ANONVAL))
        || strlen(str) == 0)
     {
         /* if there's nothing in the env, and this is the empty
