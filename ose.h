@@ -324,6 +324,14 @@ extern const char * const ose_date_compiled;
 #define OSEVM_CONTROL_SIZE OSE_CONF_VM_CONTROL_SIZE
 #define OSEVM_DUMP_SIZE OSE_CONF_VM_DUMP_SIZE
 #define OSEVM_OUTPUT_SIZE OSE_CONF_VM_OUTPUT_SIZE
+#define OSEVM_TOTAL_SIZE                                      \
+    (OSEVM_CACHE_MSG_SIZE                                     \
+     + OSEVM_INPUT_SIZE + OSE_CONTEXT_MESSAGE_OVERHEAD        \
+     + OSEVM_STACK_SIZE + OSE_CONTEXT_MESSAGE_OVERHEAD        \
+     + OSEVM_ENV_SIZE + OSE_CONTEXT_MESSAGE_OVERHEAD          \
+     + OSEVM_CONTROL_SIZE + OSE_CONTEXT_MESSAGE_OVERHEAD      \
+     + OSEVM_DUMP_SIZE + OSE_CONTEXT_MESSAGE_OVERHEAD         \
+     + OSEVM_OUTPUT_SIZE + OSE_CONTEXT_MESSAGE_OVERHEAD)
 
 #elif !defined(OSE_CONF_VM_INPUT_SIZE)          \
     && !defined(OSE_CONF_VM_STACK_SIZE)         \
