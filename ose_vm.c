@@ -707,7 +707,14 @@ static void applyControl(ose_bundle osevm, char *address)
 
     if(route_pfx(a, OSEVM_TOK_AT, 1))
     {
-        ose_pushString(vm_s, str + 2);
+        if(str[3])
+        {
+            ose_pushString(vm_s, str + 2);
+        }
+        else
+        {
+            ose_pushString(vm_s, OSE_ADDRESS_ANONVAL);
+        }
         OSEVM_ASSIGN(osevm);
     }
     else if(route_pfx(a, OSEVM_TOK_QUOTE, 1))
