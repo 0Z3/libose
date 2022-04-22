@@ -601,7 +601,7 @@ void ose_builtin_map(ose_bundle osevm)
         ose_countItems(vm_s);
         int32_t n = ose_popInt32(vm_s);
         ose_popAll(vm_s);
-        int i = 0, j = -1;
+        int i = 0;//, j = -1;
         ose_pushBundle(vm_s);
         /* ENm1 ... E0 B B - */
         /* B1 => items */
@@ -612,8 +612,8 @@ void ose_builtin_map(ose_bundle osevm)
             ose_rot(vm_s);
             /* ENm1 ... B1 B0 E0 - */
             ose_countItems(vm_s);
-            int jj = ose_popInt32(vm_s);
-            if(jj == 0)
+            int nitems = ose_popInt32(vm_s);
+            if(nitems == 0)
             {
                 for(i = 0; i < n + 3; i++)
                 {
@@ -621,27 +621,22 @@ void ose_builtin_map(ose_bundle osevm)
                 }
                 return;
             }
-            else if(j > 0 && jj != j)
-            {
-                ose_rassert(0 && "arguments to map must be the same length", 1);
-                break;
-            }
+            /* else if(j > 0 && jj != j) */
+            /* { */
+            /*     ose_rassert(0 && "arguments to map must be the same length", 1); */
+            /*     break; */
+            /* } */
             else
-            {
-                ose_pop(vm_s);  /* ENm1 ... B1 B0 E0 I0 - */
+            {                     /* ENm1 ...    B1 B0 E0 - */
+                ose_pop(vm_s);    /* ENm1 ... B1 B0 E0 I0 - */
                 ose_notrot(vm_s); /* ENm1 ... B1 I0 B0 E0 - */
-                ose_push(vm_s); /* ENm1 ... B1 I0 B0 - */
-                ose_notrot(vm_s); /* ENm1 ... B0 B1 I0 - */
-                ose_push(vm_s); /* ENm1 ... B0 B1 - */
-                ose_swap(vm_s); /* ENm1 ... B1 B0 - */
+                ose_push(vm_s);   /* ENm1 ...    B1 I0 B0 - */
+                ose_notrot(vm_s); /* ENm1 ...    B0 B1 I0 - */
+                ose_push(vm_s);   /* ENm1 ...       B0 B1 - */
+                ose_swap(vm_s);   /* ENm1 ...       B1 B0 - */
             }
         }
         /* B1 B0 - */
-        /* if(!strcmp(ose_peekAddress(vm_c), "/!")) */
-        /* { */
-        /*     ose_drop(vm_c); */
-        /*     ose_pushMessage(vm_c, "/!/map", 6, 0); */
-        /* } */
         ose_copyElem(vm_s, vm_c);
         ose_drop(vm_s);
         ose_swap(vm_s);
