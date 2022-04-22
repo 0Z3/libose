@@ -55,7 +55,7 @@ extern "C" {
 	: (void)0
 #endif
 
-#define ose_rassert(t, b)
+#define ose_rassert(t, b) assert(t);
 
 #ifdef OSE_DEBUG
 #define ose_always(t) ((t) ? 1 : (ose_assert(0), 0))
