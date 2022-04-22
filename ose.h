@@ -151,7 +151,7 @@ typedef char* ose_bundle;
 */
 typedef char ose_bool;
 typedef void (*ose_fn)(ose_bundle);
-#define OSE_INTPTR2 16
+#define OSE_INTPTR2 sizeof(intptr_t) * 2
 
 /* OSC 1.0 types */
 #define OSETT_ID ','
