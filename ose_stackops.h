@@ -500,6 +500,10 @@ struct ose_timetag ose_peekTimetag(const ose_bundle bundle);
 
 
 
+const void *ose_peekAlignedPtr(ose_bundle bundle);
+
+
+
 
 /**
  * @brief Get the value of the topmost item of the topmost element,

@@ -542,6 +542,15 @@ struct ose_timetag ose_peekTimetag(const ose_bundle bundle)
 }
 #endif
 
+const void *ose_peekAlignedPtr(ose_bundle bundle)
+{
+    int32_t o = ose_getLastBundleElemOffset(bundle);
+    int32_t to, ntt, lto, po, lpo;
+    ose_getNthPayloadItem(bundle, 1, o, &to, &ntt, &lto, &po, &lpo);
+    ose_alignPtr(bundle, lpo + 4);
+    return ose_readAlignedPtr(bundle, lpo + 4);
+}
+
 /* no peek functions for unit types */
 
 int32_t ose_popInt32(ose_bundle bundle)
